@@ -84,14 +84,67 @@ The application provides the following search endpoints for retrieving data from
 ### Example Usage
 ```bash
 # Get all matches (up to 10)
-curl "http://localhost:8080/api/matches"
+curl "http://localhost:8082/api/matches"
 
 # Search for specific matches
-curl "http://localhost:8080/api/matches?q=Barcelona&size=5"
+curl "http://localhost:8082/api/matches?q=Barcelona&size=5"
 
 # Get all predictions
-curl "http://localhost:8080/api/predictions"
+curl "http://localhost:8082/api/predictions"
 ```
+
+## Elasticsearch Setup with Dev Services
+
+This application uses **Quarkus Dev Services** to automatically start Elasticsearch during development and testing. No manual setup required!
+
+### Automatic Setup (Recommended)
+
+1. **Just start the application:**
+   ```bash
+   ./mvnw quarkus:dev
+   ```
+
+2. **Quarkus will automatically:**
+   - Start an Elasticsearch container using Docker
+   - Configure the connection
+   - Initialize sample data
+   - Make it available at `localhost:9200`
+
+3. **Test the endpoints:**
+   ```bash
+   curl "http://localhost:8082/api/matches"
+   curl "http://localhost:8082/health/elasticsearch"
+   ```
+
+### Sample Data
+
+The application automatically creates sample data in the following indices:
+- `football_matches` - Sample football match data
+- `predictions` - Sample match predictions
+- `quiz_games` - Sample quiz games
+- `player_games` - Sample player of the match games
+
+### Manual Elasticsearch Setup (Optional)
+
+If you prefer to use your own Elasticsearch instance:
+
+1. **Disable Dev Services:**
+   ```properties
+   quarkus.elasticsearch.devservices.enabled=false
+   ```
+
+2. **Start Elasticsearch:**
+   ```bash
+   docker run -d --name elasticsearch -p 9200:9200 -e "discovery.type=single-node" -e "xpack.security.enabled=false" elasticsearch:8.11.0
+   ```
+
+### Dev Services Configuration
+
+The Dev Services are configured in `application.properties`:
+- **Image**: `docker.elastic.co/elasticsearch/elasticsearch:8.11.0`
+- **Port**: `9200` (development), `9201` (tests)
+- **Memory**: `512MB` (development), `256MB` (tests)
+- **Shared**: Reuses container across application restarts
 
 ## Related Guides
 
