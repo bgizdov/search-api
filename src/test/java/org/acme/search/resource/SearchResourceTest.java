@@ -18,6 +18,7 @@ class SearchResourceTest {
         given()
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(is(400));
     }
 
@@ -28,6 +29,7 @@ class SearchResourceTest {
             .queryParam("type", "invalid")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(is(400));
     }
 
@@ -38,6 +40,7 @@ class SearchResourceTest {
             .queryParam("type", "matches")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(500)));
     }
 
@@ -48,6 +51,7 @@ class SearchResourceTest {
             .queryParam("type", "predictions")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(500)));
     }
 
@@ -58,6 +62,7 @@ class SearchResourceTest {
             .queryParam("type", "quiz-games")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(500)));
     }
 
@@ -68,6 +73,7 @@ class SearchResourceTest {
             .queryParam("type", "player-games")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(500)));
     }
 
@@ -80,6 +86,7 @@ class SearchResourceTest {
             .queryParam("size", "5")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(500)));
     }
 
@@ -88,6 +95,7 @@ class SearchResourceTest {
         given()
             .when().get("/health/elasticsearch")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(503)));
     }
 
@@ -101,6 +109,7 @@ class SearchResourceTest {
             .queryParam("id", "1")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(404), is(500))); // 200 if found, 404 if not found, 500 if ES unavailable
     }
 
@@ -112,6 +121,7 @@ class SearchResourceTest {
             .queryParam("id", "999999")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(404), is(500))); // 404 if ES available but not found, 500 if ES unavailable
     }
 
@@ -123,6 +133,7 @@ class SearchResourceTest {
             .queryParam("id", "invalid")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(is(400)); // Should always return 400 for invalid format
     }
 
@@ -134,6 +145,7 @@ class SearchResourceTest {
             .queryParam("id", "1")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(404), is(500)));
     }
 
@@ -145,6 +157,7 @@ class SearchResourceTest {
             .queryParam("id", "999999")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(404), is(500)));
     }
 
@@ -156,6 +169,7 @@ class SearchResourceTest {
             .queryParam("id", "invalid")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(is(400));
     }
 
@@ -167,6 +181,7 @@ class SearchResourceTest {
             .queryParam("id", "1")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(404), is(500)));
     }
 
@@ -178,6 +193,7 @@ class SearchResourceTest {
             .queryParam("id", "999999")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(404), is(500)));
     }
 
@@ -189,6 +205,7 @@ class SearchResourceTest {
             .queryParam("id", "invalid")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(is(400));
     }
 
@@ -200,6 +217,7 @@ class SearchResourceTest {
             .queryParam("id", "1")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(200), is(404), is(500)));
     }
 
@@ -211,6 +229,7 @@ class SearchResourceTest {
             .queryParam("id", "999999")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(404), is(500)));
     }
 
@@ -222,6 +241,7 @@ class SearchResourceTest {
             .queryParam("id", "invalid")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(is(400));
     }
 
@@ -233,6 +253,7 @@ class SearchResourceTest {
             .queryParam("id", "0")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(404), is(500)));
     }
 
@@ -244,6 +265,44 @@ class SearchResourceTest {
             .queryParam("id", "-1")
             .when().get("/api/search")
             .then()
+            .log().all()
             .statusCode(anyOf(is(404), is(500)));
+    }
+
+    @Test
+    void testSearchWithEmptyQuery() {
+        // Test searching with empty query parameter
+        given()
+            .queryParam("type", "matches")
+            .queryParam("q", "")
+            .when().get("/api/search")
+            .then()
+            .log().all()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchWithSizeParameter() {
+        // Test searching with custom size parameter
+        given()
+            .queryParam("type", "matches")
+            .queryParam("size", "3")
+            .when().get("/api/search")
+            .then()
+            .log().all()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchWithAllParameters() {
+        // Test searching with all parameters
+        given()
+            .queryParam("type", "matches")
+            .queryParam("q", "test")
+            .queryParam("size", "2")
+            .when().get("/api/search")
+            .then()
+            .log().all()
+            .statusCode(anyOf(is(200), is(500)));
     }
 }
