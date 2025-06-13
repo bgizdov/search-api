@@ -53,6 +53,46 @@ You can then execute your native executable with: `./target/search-api-1.0.0-SNA
 
 If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
 
+## API Endpoints
+
+The application provides the following search endpoints for retrieving data from Elasticsearch:
+
+### Football Matches
+- **GET** `/api/matches` - Search football match data
+- Query parameters:
+  - `q` (optional): Search query string
+  - `size` (optional, default: 10): Number of results to return
+
+### Predictions
+- **GET** `/api/predictions` - Search match predictions
+- Query parameters:
+  - `q` (optional): Search query string
+  - `size` (optional, default: 10): Number of results to return
+
+### Quiz Games
+- **GET** `/api/quiz-games` - Search quiz games
+- Query parameters:
+  - `q` (optional): Search query string
+  - `size` (optional, default: 10): Number of results to return
+
+### Player of the Match Games
+- **GET** `/api/player-games` - Search player of the match games
+- Query parameters:
+  - `q` (optional): Search query string
+  - `size` (optional, default: 10): Number of results to return
+
+### Example Usage
+```bash
+# Get all matches (up to 10)
+curl "http://localhost:8080/api/matches"
+
+# Search for specific matches
+curl "http://localhost:8080/api/matches?q=Barcelona&size=5"
+
+# Get all predictions
+curl "http://localhost:8080/api/predictions"
+```
+
 ## Related Guides
 
 - REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
