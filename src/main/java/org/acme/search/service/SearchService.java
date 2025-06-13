@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Service for searching DTOs from Elasticsearch
@@ -76,9 +77,65 @@ public class SearchService {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/player_games/_search");
         request.setJsonEntity(searchQuery);
-        
+
         Response response = restClient.performRequest(request);
         return parseSearchResponse(response, PlayerOfTheMatchGame.class);
+    }
+
+    /**
+     * Find a football match by ID
+     */
+    public Optional<FootballMatchData> findMatchById(Long id) throws IOException {
+        Request request = new Request("GET", "/football_matches/_doc/" + id);
+        try {
+            Response response = restClient.performRequest(request);
+            return parseGetResponse(response, FootballMatchData.class);
+        } catch (Exception e) {
+            // Document not found or other error
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Find a prediction by ID
+     */
+    public Optional<PredictionToMatch> findPredictionById(Long id) throws IOException {
+        Request request = new Request("GET", "/predictions/_doc/" + id);
+        try {
+            Response response = restClient.performRequest(request);
+            return parseGetResponse(response, PredictionToMatch.class);
+        } catch (Exception e) {
+            // Document not found or other error
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Find a quiz game by ID
+     */
+    public Optional<QuizGame> findQuizGameById(Long id) throws IOException {
+        Request request = new Request("GET", "/quiz_games/_doc/" + id);
+        try {
+            Response response = restClient.performRequest(request);
+            return parseGetResponse(response, QuizGame.class);
+        } catch (Exception e) {
+            // Document not found or other error
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Find a player game by ID
+     */
+    public Optional<PlayerOfTheMatchGame> findPlayerGameById(Long id) throws IOException {
+        Request request = new Request("GET", "/player_games/_doc/" + id);
+        try {
+            Response response = restClient.performRequest(request);
+            return parseGetResponse(response, PlayerOfTheMatchGame.class);
+        } catch (Exception e) {
+            // Document not found or other error
+            return Optional.empty();
+        }
     }
 
     /**
@@ -117,17 +174,35 @@ public class SearchService {
     private <T> List<T> parseSearchResponse(Response response, Class<T> clazz) throws IOException {
         String responseBody = new String(response.getEntity().getContent().readAllBytes());
         Map<String, Object> responseMap = objectMapper.readValue(responseBody, Map.class);
-        
+
         Map<String, Object> hits = (Map<String, Object>) responseMap.get("hits");
         List<Map<String, Object>> hitsList = (List<Map<String, Object>>) hits.get("hits");
-        
+
         List<T> results = new ArrayList<>();
         for (Map<String, Object> hit : hitsList) {
             Map<String, Object> source = (Map<String, Object>) hit.get("_source");
             T dto = objectMapper.convertValue(source, clazz);
             results.add(dto);
         }
-        
+
         return results;
+    }
+
+    /**
+     * Parse Elasticsearch GET response and convert to DTO
+     */
+    @SuppressWarnings("unchecked")
+    private <T> Optional<T> parseGetResponse(Response response, Class<T> clazz) throws IOException {
+        String responseBody = new String(response.getEntity().getContent().readAllBytes());
+        Map<String, Object> responseMap = objectMapper.readValue(responseBody, Map.class);
+
+        Boolean found = (Boolean) responseMap.get("found");
+        if (found != null && found) {
+            Map<String, Object> source = (Map<String, Object>) responseMap.get("_source");
+            T dto = objectMapper.convertValue(source, clazz);
+            return Optional.of(dto);
+        }
+
+        return Optional.empty();
     }
 }
