@@ -10,45 +10,75 @@ import static org.hamcrest.CoreMatchers.is;
 @QuarkusTest
 class SearchResourceTest {
 
+    // Tests for unified search endpoint
+
     @Test
-    void testSearchMatchesEndpoint() {
-        // Test endpoint exists and returns either 200 (ES available) or 500 (ES unavailable)
+    void testUnifiedSearchMissingType() {
+        // Test missing type parameter returns 400
         given()
-            .when().get("/api/matches")
+            .when().get("/api/search")
+            .then()
+            .statusCode(is(400));
+    }
+
+    @Test
+    void testUnifiedSearchInvalidType() {
+        // Test invalid type parameter returns 400
+        given()
+            .queryParam("type", "invalid")
+            .when().get("/api/search")
+            .then()
+            .statusCode(is(400));
+    }
+
+    @Test
+    void testSearchMatches() {
+        // Test searching matches
+        given()
+            .queryParam("type", "matches")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(500)));
     }
 
     @Test
-    void testSearchPredictionsEndpoint() {
+    void testSearchPredictions() {
+        // Test searching predictions
         given()
-            .when().get("/api/predictions")
+            .queryParam("type", "predictions")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(500)));
     }
 
     @Test
-    void testSearchQuizGamesEndpoint() {
+    void testSearchQuizGames() {
+        // Test searching quiz games
         given()
-            .when().get("/api/quiz-games")
+            .queryParam("type", "quiz-games")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(500)));
     }
 
     @Test
-    void testSearchPlayerGamesEndpoint() {
+    void testSearchPlayerGames() {
+        // Test searching player games
         given()
-            .when().get("/api/player-games")
+            .queryParam("type", "player-games")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(500)));
     }
 
     @Test
     void testSearchMatchesWithQuery() {
+        // Test searching matches with query and size
         given()
+            .queryParam("type", "matches")
             .queryParam("q", "test")
             .queryParam("size", "5")
-            .when().get("/api/matches")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(500)));
     }
@@ -61,13 +91,15 @@ class SearchResourceTest {
             .statusCode(anyOf(is(200), is(503)));
     }
 
-    // Tests for ID-based endpoints
+    // Tests for ID-based search using unified endpoint
 
     @Test
     void testGetMatchByValidId() {
         // Test with ID 1 (should exist in sample data)
         given()
-            .when().get("/api/matches/1")
+            .queryParam("type", "matches")
+            .queryParam("id", "1")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(404), is(500))); // 200 if found, 404 if not found, 500 if ES unavailable
     }
@@ -76,7 +108,9 @@ class SearchResourceTest {
     void testGetMatchByInvalidId() {
         // Test with non-existent ID
         given()
-            .when().get("/api/matches/999999")
+            .queryParam("type", "matches")
+            .queryParam("id", "999999")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(404), is(500))); // 404 if ES available but not found, 500 if ES unavailable
     }
@@ -85,7 +119,9 @@ class SearchResourceTest {
     void testGetMatchByNonNumericId() {
         // Test with invalid ID format
         given()
-            .when().get("/api/matches/invalid")
+            .queryParam("type", "matches")
+            .queryParam("id", "invalid")
+            .when().get("/api/search")
             .then()
             .statusCode(is(400)); // Should always return 400 for invalid format
     }
@@ -94,7 +130,9 @@ class SearchResourceTest {
     void testGetPredictionByValidId() {
         // Test with ID 1 (should exist in sample data)
         given()
-            .when().get("/api/predictions/1")
+            .queryParam("type", "predictions")
+            .queryParam("id", "1")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(404), is(500)));
     }
@@ -103,7 +141,9 @@ class SearchResourceTest {
     void testGetPredictionByInvalidId() {
         // Test with non-existent ID
         given()
-            .when().get("/api/predictions/999999")
+            .queryParam("type", "predictions")
+            .queryParam("id", "999999")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(404), is(500)));
     }
@@ -112,7 +152,9 @@ class SearchResourceTest {
     void testGetPredictionByNonNumericId() {
         // Test with invalid ID format
         given()
-            .when().get("/api/predictions/invalid")
+            .queryParam("type", "predictions")
+            .queryParam("id", "invalid")
+            .when().get("/api/search")
             .then()
             .statusCode(is(400));
     }
@@ -121,7 +163,9 @@ class SearchResourceTest {
     void testGetQuizGameByValidId() {
         // Test with ID 1 (should exist in sample data)
         given()
-            .when().get("/api/quiz-games/1")
+            .queryParam("type", "quiz-games")
+            .queryParam("id", "1")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(404), is(500)));
     }
@@ -130,7 +174,9 @@ class SearchResourceTest {
     void testGetQuizGameByInvalidId() {
         // Test with non-existent ID
         given()
-            .when().get("/api/quiz-games/999999")
+            .queryParam("type", "quiz-games")
+            .queryParam("id", "999999")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(404), is(500)));
     }
@@ -139,7 +185,9 @@ class SearchResourceTest {
     void testGetQuizGameByNonNumericId() {
         // Test with invalid ID format
         given()
-            .when().get("/api/quiz-games/invalid")
+            .queryParam("type", "quiz-games")
+            .queryParam("id", "invalid")
+            .when().get("/api/search")
             .then()
             .statusCode(is(400));
     }
@@ -148,7 +196,9 @@ class SearchResourceTest {
     void testGetPlayerGameByValidId() {
         // Test with ID 1 (should exist in sample data)
         given()
-            .when().get("/api/player-games/1")
+            .queryParam("type", "player-games")
+            .queryParam("id", "1")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(200), is(404), is(500)));
     }
@@ -157,7 +207,9 @@ class SearchResourceTest {
     void testGetPlayerGameByInvalidId() {
         // Test with non-existent ID
         given()
-            .when().get("/api/player-games/999999")
+            .queryParam("type", "player-games")
+            .queryParam("id", "999999")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(404), is(500)));
     }
@@ -166,7 +218,9 @@ class SearchResourceTest {
     void testGetPlayerGameByNonNumericId() {
         // Test with invalid ID format
         given()
-            .when().get("/api/player-games/invalid")
+            .queryParam("type", "player-games")
+            .queryParam("id", "invalid")
+            .when().get("/api/search")
             .then()
             .statusCode(is(400));
     }
@@ -175,7 +229,9 @@ class SearchResourceTest {
     void testGetMatchByZeroId() {
         // Test edge case with ID 0
         given()
-            .when().get("/api/matches/0")
+            .queryParam("type", "matches")
+            .queryParam("id", "0")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(404), is(500)));
     }
@@ -184,7 +240,9 @@ class SearchResourceTest {
     void testGetMatchByNegativeId() {
         // Test edge case with negative ID
         given()
-            .when().get("/api/matches/-1")
+            .queryParam("type", "matches")
+            .queryParam("id", "-1")
+            .when().get("/api/search")
             .then()
             .statusCode(anyOf(is(404), is(500)));
     }

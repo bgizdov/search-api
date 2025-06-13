@@ -26,190 +26,63 @@ public class SearchResource {
     SearchService searchService;
 
     /**
-     * Search for football matches
-     * GET /api/matches?q=searchTerm&size=10
+     * Unified search endpoint for all entity types
+     * GET /api/search?type=matches&q=searchTerm&size=10
+     * GET /api/search?type=matches&id=1
      */
     @GET
-    @Path("/matches")
-    public Response searchMatches(
+    @Path("/search")
+    public Response unifiedSearch(
+            @QueryParam("type") String type,
+            @QueryParam("id") String idStr,
             @QueryParam("q") String query,
             @QueryParam("size") @DefaultValue("10") int size) {
-        try {
-            List<FootballMatchData> matches = searchService.searchMatches(query, size);
-            return Response.ok(matches).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Failed to search matches: " + e.getMessage()))
-                    .build();
-        }
-    }
 
-    /**
-     * Get a specific football match by ID
-     * GET /api/matches/{id}
-     */
-    @GET
-    @Path("/matches/{id}")
-    public Response getMatchById(@PathParam("id") String idStr) {
-        try {
-            Long id = Long.parseLong(idStr);
-            Optional<FootballMatchData> match = searchService.findMatchById(id);
-            if (match.isPresent()) {
-                return Response.ok(match.get()).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity(Map.of("error", "Match with ID " + id + " not found"))
-                        .build();
-            }
-        } catch (NumberFormatException e) {
+        // Validate required type parameter
+        if (type == null || type.trim().isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", "Invalid ID format: " + idStr))
-                    .build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Failed to get match: " + e.getMessage()))
+                    .entity(Map.of("error", "Missing required parameter 'type'. Supported types: matches, predictions, quiz-games, player-games"))
                     .build();
         }
-    }
 
-    /**
-     * Search for predictions
-     * GET /api/predictions?q=searchTerm&size=10
-     */
-    @GET
-    @Path("/predictions")
-    public Response searchPredictions(
-            @QueryParam("q") String query,
-            @QueryParam("size") @DefaultValue("10") int size) {
         try {
-            List<PredictionToMatch> predictions = searchService.searchPredictions(query, size);
-            return Response.ok(predictions).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Failed to search predictions: " + e.getMessage()))
-                    .build();
-        }
-    }
-
-    /**
-     * Get a specific prediction by ID
-     * GET /api/predictions/{id}
-     */
-    @GET
-    @Path("/predictions/{id}")
-    public Response getPredictionById(@PathParam("id") String idStr) {
-        try {
-            Long id = Long.parseLong(idStr);
-            Optional<PredictionToMatch> prediction = searchService.findPredictionById(id);
-            if (prediction.isPresent()) {
-                return Response.ok(prediction.get()).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity(Map.of("error", "Prediction with ID " + id + " not found"))
-                        .build();
+            Long id = null;
+            if (idStr != null && !idStr.trim().isEmpty()) {
+                try {
+                    id = Long.parseLong(idStr);
+                } catch (NumberFormatException e) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity(Map.of("error", "Invalid ID format: " + idStr))
+                            .build();
+                }
             }
-        } catch (NumberFormatException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", "Invalid ID format: " + idStr))
-                    .build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Failed to get prediction: " + e.getMessage()))
-                    .build();
-        }
-    }
 
-    /**
-     * Search for quiz games
-     * GET /api/quiz-games?q=searchTerm&size=10
-     */
-    @GET
-    @Path("/quiz-games")
-    public Response searchQuizGames(
-            @QueryParam("q") String query,
-            @QueryParam("size") @DefaultValue("10") int size) {
-        try {
-            List<QuizGame> quizGames = searchService.searchQuizGames(query, size);
-            return Response.ok(quizGames).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Failed to search quiz games: " + e.getMessage()))
-                    .build();
-        }
-    }
+            Object result = searchService.unifiedSearch(type, id, query, size);
 
-    /**
-     * Get a specific quiz game by ID
-     * GET /api/quiz-games/{id}
-     */
-    @GET
-    @Path("/quiz-games/{id}")
-    public Response getQuizGameById(@PathParam("id") String idStr) {
-        try {
-            Long id = Long.parseLong(idStr);
-            Optional<QuizGame> quizGame = searchService.findQuizGameById(id);
-            if (quizGame.isPresent()) {
-                return Response.ok(quizGame.get()).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity(Map.of("error", "Quiz game with ID " + id + " not found"))
-                        .build();
+            // Handle Optional results (when searching by ID)
+            if (result instanceof Optional<?> optional) {
+                if (optional.isPresent()) {
+                    return Response.ok(optional.get()).build();
+                } else {
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity(Map.of("error", type + " with ID " + id + " not found"))
+                            .build();
+                }
             }
-        } catch (NumberFormatException e) {
+
+            // Handle List results (when searching by query)
+            return Response.ok(result).build();
+
+        } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", "Invalid ID format: " + idStr))
+                    .entity(Map.of("error", e.getMessage()))
                     .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Failed to get quiz game: " + e.getMessage()))
+                    .entity(Map.of("error", "Failed to search " + type + ": " + e.getMessage()))
                     .build();
         }
     }
 
-    /**
-     * Search for player of the match games
-     * GET /api/player-games?q=searchTerm&size=10
-     */
-    @GET
-    @Path("/player-games")
-    public Response searchPlayerGames(
-            @QueryParam("q") String query,
-            @QueryParam("size") @DefaultValue("10") int size) {
-        try {
-            List<PlayerOfTheMatchGame> playerGames = searchService.searchPlayerGames(query, size);
-            return Response.ok(playerGames).build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Failed to search player games: " + e.getMessage()))
-                    .build();
-        }
-    }
 
-    /**
-     * Get a specific player game by ID
-     * GET /api/player-games/{id}
-     */
-    @GET
-    @Path("/player-games/{id}")
-    public Response getPlayerGameById(@PathParam("id") String idStr) {
-        try {
-            Long id = Long.parseLong(idStr);
-            Optional<PlayerOfTheMatchGame> playerGame = searchService.findPlayerGameById(id);
-            if (playerGame.isPresent()) {
-                return Response.ok(playerGame.get()).build();
-            } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity(Map.of("error", "Player game with ID " + id + " not found"))
-                        .build();
-            }
-        } catch (NumberFormatException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", "Invalid ID format: " + idStr))
-                    .build();
-        } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Failed to get player game: " + e.getMessage()))
-                    .build();
-        }
-    }
 }

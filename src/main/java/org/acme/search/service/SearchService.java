@@ -139,6 +139,43 @@ public class SearchService {
     }
 
     /**
+     * Unified search method that handles all entity types
+     */
+    public Object unifiedSearch(String type, Long id, String query, int size) throws IOException {
+        return switch (type.toLowerCase()) {
+            case "matches" -> {
+                if (id != null) {
+                    yield findMatchById(id);
+                } else {
+                    yield searchMatches(query, size);
+                }
+            }
+            case "predictions" -> {
+                if (id != null) {
+                    yield findPredictionById(id);
+                } else {
+                    yield searchPredictions(query, size);
+                }
+            }
+            case "quiz-games" -> {
+                if (id != null) {
+                    yield findQuizGameById(id);
+                } else {
+                    yield searchQuizGames(query, size);
+                }
+            }
+            case "player-games" -> {
+                if (id != null) {
+                    yield findPlayerGameById(id);
+                } else {
+                    yield searchPlayerGames(query, size);
+                }
+            }
+            default -> throw new IllegalArgumentException("Unsupported type: " + type + ". Supported types: matches, predictions, quiz-games, player-games");
+        };
+    }
+
+    /**
      * Build Elasticsearch search query
      */
     private String buildSearchQuery(String query, int size) {
