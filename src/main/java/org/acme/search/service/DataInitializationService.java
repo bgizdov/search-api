@@ -39,8 +39,8 @@ public class DataInitializationService {
         // Use a separate thread to avoid blocking startup
         new Thread(() -> {
             try {
-                // Wait a bit for Elasticsearch to be ready
-                Thread.sleep(2000);
+                // Wait a bit for Elasticsearch to be ready (Dev Services need time to start)
+                Thread.sleep(10000);
                 LOG.info("Initializing sample data in Elasticsearch...");
                 initializeSampleData();
                 LOG.info("Sample data initialization completed.");

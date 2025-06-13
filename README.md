@@ -97,54 +97,52 @@ curl "http://localhost:8082/api/predictions"
 
 This application uses **Quarkus Dev Services** to automatically start Elasticsearch during development and testing. No manual setup required!
 
-### Automatic Setup (Recommended)
+### Quick Start
 
-1. **Just start the application:**
-   ```bash
-   ./mvnw quarkus:dev
-   ```
+```bash
+# Just start the application - Elasticsearch starts automatically
+./mvnw quarkus:dev
 
-2. **Quarkus will automatically:**
-   - Start an Elasticsearch container using Docker
-   - Configure the connection
-   - Initialize sample data
-   - Make it available at `localhost:9200`
+# Application available at: http://localhost:8082
+# Test endpoints (work immediately, return data once Elasticsearch is ready)
+curl "http://localhost:8082/api/matches"
+curl "http://localhost:8082/health/elasticsearch"
+```
 
-3. **Test the endpoints:**
-   ```bash
-   curl "http://localhost:8082/api/matches"
-   curl "http://localhost:8082/health/elasticsearch"
-   ```
+### Key Features
+
+- ✅ **Zero Configuration** - No manual Elasticsearch setup needed
+- ✅ **Automatic Container Management** - Docker containers start/stop automatically
+- ✅ **Container Reuse** - Faster restarts with persistent containers
+- ✅ **Sample Data** - Automatically loads test data when ready
+- ✅ **Isolated Testing** - Separate containers for tests
 
 ### Sample Data
 
-The application automatically creates sample data in the following indices:
+The application automatically creates sample data:
 - `football_matches` - Sample football match data
 - `predictions` - Sample match predictions
 - `quiz_games` - Sample quiz games
 - `player_games` - Sample player of the match games
 
-### Manual Elasticsearch Setup (Optional)
+### Speed Up Development
 
-If you prefer to use your own Elasticsearch instance:
+Enable container reuse for faster startup times:
 
-1. **Disable Dev Services:**
+1. Create `~/.testcontainers.properties`:
    ```properties
-   quarkus.elasticsearch.devservices.enabled=false
+   testcontainers.reuse.enable=true
    ```
 
-2. **Start Elasticsearch:**
-   ```bash
-   docker run -d --name elasticsearch -p 9200:9200 -e "discovery.type=single-node" -e "xpack.security.enabled=false" elasticsearch:8.11.0
-   ```
+2. Containers will persist between application restarts
 
-### Dev Services Configuration
+### Detailed Documentation
 
-The Dev Services are configured in `application.properties`:
-- **Image**: `docker.elastic.co/elasticsearch/elasticsearch:8.11.0`
-- **Port**: `9200` (development), `9201` (tests)
-- **Memory**: `512MB` (development), `256MB` (tests)
-- **Shared**: Reuses container across application restarts
+📚 **See [ELASTICSEARCH_DEV_SERVICES.md](ELASTICSEARCH_DEV_SERVICES.md) for complete Dev Services documentation including:**
+- Configuration options
+- Container reuse setup
+- Troubleshooting guide
+- Production configuration
 
 ## Related Guides
 
