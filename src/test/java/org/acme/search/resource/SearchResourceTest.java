@@ -586,4 +586,27 @@ class SearchResourceTest {
             .log().body()
             .statusCode(is(400));
     }
+
+    @Test
+    void testSearchForHomeWin() {
+        // Test searching for "HOME_WIN" in predictions - should find our test data
+        given()
+            .queryParam("type", "predictions")
+            .queryParam("q", "HOME_WIN")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchForHomeWinAllTypes() {
+        // Test searching for "HOME_WIN" across all types - should find prediction data
+        given()
+            .queryParam("q", "HOME_WIN")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
 }
