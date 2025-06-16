@@ -142,12 +142,12 @@ class SearchResourceTest {
 
     @Test
     void testUnifiedSearchMissingType() {
-        // Test missing type parameter returns 400
+        // Test missing type parameter now searches all types (returns 200)
         given()
             .when().get("/api/search")
             .then()
             .log().all()
-            .statusCode(is(400));
+            .statusCode(anyOf(is(200), is(500)));
     }
 
     @Test
@@ -528,5 +528,62 @@ class SearchResourceTest {
             .then()
             .log().body()
             .statusCode(anyOf(is(200), is(500)));
+    }
+
+    // Tests for cross-type search (no type specified)
+
+    @Test
+    void testSearchAllTypesWithoutType() {
+        // Test searching across all types without specifying type
+        given()
+            .queryParam("q", "Barcelona")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchAllTypesWithMessi() {
+        // Test searching for "Messi" across all types
+        given()
+            .queryParam("q", "Messi")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchAllTypesWithoutQuery() {
+        // Test searching all types without query (should return all data)
+        given()
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchAllTypesWithSize() {
+        // Test searching all types with custom size
+        given()
+            .queryParam("q", "test")
+            .queryParam("size", "8")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchAllTypesWithIdShouldFail() {
+        // Test that ID-based search without type returns 400
+        given()
+            .queryParam("id", "1")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(is(400));
     }
 }

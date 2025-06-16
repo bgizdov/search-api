@@ -8,6 +8,7 @@ import org.acme.search.dto.FootballMatchData;
 import org.acme.search.dto.PlayerOfTheMatchGame;
 import org.acme.search.dto.PredictionToMatch;
 import org.acme.search.dto.QuizGame;
+import org.acme.search.dto.UnifiedSearchResponse;
 import org.acme.search.service.SearchService;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class SearchResource {
      * Unified search endpoint for all entity types
      * GET /api/search?type=matches&q=searchTerm&size=10
      * GET /api/search?type=matches&id=1
+     * GET /api/search?q=searchTerm&size=10 (searches all types)
      */
     @GET
     @Path("/search")
@@ -38,11 +40,24 @@ public class SearchResource {
             @QueryParam("q") String query,
             @QueryParam("size") @DefaultValue("10") int size) {
 
-        // Validate required type parameter
+        // If no type is specified, search across all types
         if (type == null || type.trim().isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", "Missing required parameter 'type'. Supported types: matches, predictions, quiz-games, player-games"))
-                    .build();
+            // ID-based search requires a type
+            if (idStr != null && !idStr.trim().isEmpty()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(Map.of("error", "ID-based search requires 'type' parameter. Supported types: matches, predictions, quiz-games, player-games"))
+                        .build();
+            }
+
+            // Search across all types
+            try {
+                UnifiedSearchResponse result = searchService.searchAllTypes(query, size);
+                return Response.ok(result).build();
+            } catch (Exception e) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity(Map.of("error", "Failed to search across all types: " + e.getMessage()))
+                        .build();
+            }
         }
 
         try {

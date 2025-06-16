@@ -8,6 +8,7 @@ import org.acme.search.dto.FootballMatchData;
 import org.acme.search.dto.PlayerOfTheMatchGame;
 import org.acme.search.dto.PredictionToMatch;
 import org.acme.search.dto.QuizGame;
+import org.acme.search.dto.UnifiedSearchResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
@@ -136,6 +137,21 @@ public class SearchService {
             // Document not found or other error
             return Optional.empty();
         }
+    }
+
+    /**
+     * Search across all entity types when no type is specified
+     */
+    public UnifiedSearchResponse searchAllTypes(String query, int size) throws IOException {
+        // Search each type with a smaller size to distribute results
+        int sizePerType = Math.max(1, size / 4); // Divide size among 4 types
+
+        List<FootballMatchData> matches = searchMatches(query, sizePerType);
+        List<PredictionToMatch> predictions = searchPredictions(query, sizePerType);
+        List<QuizGame> quizGames = searchQuizGames(query, sizePerType);
+        List<PlayerOfTheMatchGame> playerGames = searchPlayerGames(query, sizePerType);
+
+        return UnifiedSearchResponse.of(matches, predictions, quizGames, playerGames);
     }
 
     /**
