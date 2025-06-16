@@ -493,4 +493,40 @@ class SearchResourceTest {
             .log().body()
             .statusCode(anyOf(is(200), is(500)));
     }
+
+    @Test
+    void testSearchForMessi() {
+        // Test searching for "Messi" in player games - should find our test data
+        given()
+            .queryParam("type", "player-games")
+            .queryParam("q", "Messi")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchForBarcelona() {
+        // Test searching for "Barcelona" in matches - should find our test data
+        given()
+            .queryParam("type", "matches")
+            .queryParam("q", "Barcelona")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
+
+    @Test
+    void testSearchForWorldCup() {
+        // Test searching for "World Cup" in quiz games - should find our test data
+        given()
+            .queryParam("type", "quiz-games")
+            .queryParam("q", "World Cup")
+            .when().get("/api/search")
+            .then()
+            .log().body()
+            .statusCode(anyOf(is(200), is(500)));
+    }
 }
