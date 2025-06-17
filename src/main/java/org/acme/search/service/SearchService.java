@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.acme.search.dto.football.Match;
+import org.acme.search.dto.football.SimpleMatch;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
 import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
+import org.acme.search.enums.SearchMode;
 import org.acme.search.dto.UnifiedSearchResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
@@ -36,29 +37,43 @@ public class SearchService {
     }
 
     /**
-     * Search for football matches
+     * Search for football matches with default search mode
      */
-    public List<Match> searchFootballMatches(String query, int size) throws IOException {
-        String searchQuery = buildSearchQuery(query, size);
+    public List<SimpleMatch> searchFootballMatches(String query, int size) throws IOException {
+        return searchFootballMatches(query, size, SearchMode.DEFAULT);
+    }
+
+    /**
+     * Search for football matches with specified search mode
+     */
+    public List<SimpleMatch> searchFootballMatches(String query, int size, SearchMode mode) throws IOException {
+        String searchQuery = buildSearchQuery(query, size, mode);
         Request request = new Request("POST", "/football_matches/_search");
         request.setJsonEntity(searchQuery);
 
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, Match.class);
+        return parseSearchResponse(response, SimpleMatch.class);
     }
 
     /**
      * Search for football matches (legacy method name for backward compatibility)
      */
-    public List<Match> searchMatches(String query, int size) throws IOException {
+    public List<SimpleMatch> searchMatches(String query, int size) throws IOException {
         return searchFootballMatches(query, size);
     }
 
     /**
-     * Search for game instances (predictions)
+     * Search for game instances (predictions) with default search mode
      */
     public List<GameInstance> searchGameInstances(String query, int size) throws IOException {
-        String searchQuery = buildSearchQuery(query, size);
+        return searchGameInstances(query, size, SearchMode.DEFAULT);
+    }
+
+    /**
+     * Search for game instances (predictions) with specified search mode
+     */
+    public List<GameInstance> searchGameInstances(String query, int size, SearchMode mode) throws IOException {
+        String searchQuery = buildSearchQuery(query, size, mode);
         Request request = new Request("POST", "/predictions/_search");
         request.setJsonEntity(searchQuery);
 
@@ -74,10 +89,17 @@ public class SearchService {
     }
 
     /**
-     * Search for classic quiz games
+     * Search for classic quiz games with default search mode
      */
     public List<ClassicQuizPublicDto> searchClassicQuizzes(String query, int size) throws IOException {
-        String searchQuery = buildSearchQuery(query, size);
+        return searchClassicQuizzes(query, size, SearchMode.DEFAULT);
+    }
+
+    /**
+     * Search for classic quiz games with specified search mode
+     */
+    public List<ClassicQuizPublicDto> searchClassicQuizzes(String query, int size, SearchMode mode) throws IOException {
+        String searchQuery = buildSearchQuery(query, size, mode);
         Request request = new Request("POST", "/quiz_games/_search");
         request.setJsonEntity(searchQuery);
 
@@ -93,10 +115,17 @@ public class SearchService {
     }
 
     /**
-     * Search for player of the match games
+     * Search for player of the match games with default search mode
      */
     public List<PlayerOfTheMatch> searchPlayerOfTheMatchGames(String query, int size) throws IOException {
-        String searchQuery = buildSearchQuery(query, size);
+        return searchPlayerOfTheMatchGames(query, size, SearchMode.DEFAULT);
+    }
+
+    /**
+     * Search for player of the match games with specified search mode
+     */
+    public List<PlayerOfTheMatch> searchPlayerOfTheMatchGames(String query, int size, SearchMode mode) throws IOException {
+        String searchQuery = buildSearchQuery(query, size, mode);
         Request request = new Request("POST", "/player_games/_search");
         request.setJsonEntity(searchQuery);
 
@@ -114,11 +143,11 @@ public class SearchService {
     /**
      * Find a football match by ID
      */
-    public Optional<Match> findFootballMatchById(Long id) throws IOException {
+    public Optional<SimpleMatch> findFootballMatchById(Long id) throws IOException {
         Request request = new Request("GET", "/football_matches/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, Match.class);
+            return parseGetResponse(response, SimpleMatch.class);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -128,7 +157,7 @@ public class SearchService {
     /**
      * Find a match by ID (legacy method name for backward compatibility)
      */
-    public Optional<Match> findMatchById(Long id) throws IOException {
+    public Optional<SimpleMatch> findMatchById(Long id) throws IOException {
         return findFootballMatchById(id);
     }
 
@@ -199,13 +228,20 @@ public class SearchService {
      * Search across all entity types when no type is specified
      */
     public UnifiedSearchResponse searchAllTypes(String query, int size) throws IOException {
+        return searchAllTypes(query, size, SearchMode.DEFAULT);
+    }
+
+    /**
+     * Search across all entity types with specified search mode
+     */
+    public UnifiedSearchResponse searchAllTypes(String query, int size, SearchMode mode) throws IOException {
         // Search each type with a smaller size to distribute results
         int sizePerType = Math.max(1, size / 4); // Divide size among 4 types
 
-        List<Match> footballMatches = searchFootballMatches(query, sizePerType);
-        List<GameInstance> gameInstances = searchGameInstances(query, sizePerType);
-        List<ClassicQuizPublicDto> classicQuizzes = searchClassicQuizzes(query, sizePerType);
-        List<PlayerOfTheMatch> playerOfTheMatchGames = searchPlayerOfTheMatchGames(query, sizePerType);
+        List<SimpleMatch> footballMatches = searchFootballMatches(query, sizePerType, mode);
+        List<GameInstance> gameInstances = searchGameInstances(query, sizePerType, mode);
+        List<ClassicQuizPublicDto> classicQuizzes = searchClassicQuizzes(query, sizePerType, mode);
+        List<PlayerOfTheMatch> playerOfTheMatchGames = searchPlayerOfTheMatchGames(query, sizePerType, mode);
 
         return UnifiedSearchResponse.of(footballMatches, gameInstances, classicQuizzes, playerOfTheMatchGames);
     }
@@ -214,33 +250,40 @@ public class SearchService {
      * Unified search method that handles all entity types
      */
     public Object unifiedSearch(String type, Long id, String query, int size) throws IOException {
+        return unifiedSearch(type, id, query, size, SearchMode.DEFAULT);
+    }
+
+    /**
+     * Unified search method that handles all entity types with search mode
+     */
+    public Object unifiedSearch(String type, Long id, String query, int size, SearchMode mode) throws IOException {
         return switch (type.toLowerCase()) {
             case "matches", "football-matches" -> {
                 if (id != null) {
                     yield findFootballMatchById(id);
                 } else {
-                    yield searchFootballMatches(query, size);
+                    yield searchFootballMatches(query, size, mode);
                 }
             }
             case "predictions", "game-instances" -> {
                 if (id != null) {
                     yield findGameInstanceById(id);
                 } else {
-                    yield searchGameInstances(query, size);
+                    yield searchGameInstances(query, size, mode);
                 }
             }
             case "quiz-games", "classic-quizzes" -> {
                 if (id != null) {
                     yield findClassicQuizById(id);
                 } else {
-                    yield searchClassicQuizzes(query, size);
+                    yield searchClassicQuizzes(query, size, mode);
                 }
             }
             case "player-games", "player-of-the-match-games" -> {
                 if (id != null) {
                     yield findPlayerOfTheMatchGameById(id);
                 } else {
-                    yield searchPlayerOfTheMatchGames(query, size);
+                    yield searchPlayerOfTheMatchGames(query, size, mode);
                 }
             }
             default -> throw new IllegalArgumentException("Unsupported type: " + type + ". Supported types: matches, predictions, quiz-games, player-games");
@@ -248,9 +291,16 @@ public class SearchService {
     }
 
     /**
-     * Build Elasticsearch search query
+     * Build Elasticsearch search query with default search mode
      */
     private String buildSearchQuery(String query, int size) {
+        return buildSearchQuery(query, size, SearchMode.DEFAULT);
+    }
+
+    /**
+     * Build Elasticsearch search query with specified search mode
+     */
+    private String buildSearchQuery(String query, int size, SearchMode mode) {
         if (query == null || query.trim().isEmpty()) {
             return String.format("""
                 {
@@ -260,20 +310,209 @@ public class SearchService {
                   }
                 }
                 """, size);
-        } else {
-            return String.format("""
-                {
-                  "size": %d,
-                  "query": {
-                    "multi_match": {
-                      "query": "%s",
-                      "type": "best_fields",
-                      "fields": ["*"]
-                    }
-                  }
-                }
-                """, size, query.replace("\"", "\\\""));
         }
+
+        return switch (mode) {
+            case CASE_INSENSITIVE -> buildCaseInsensitiveQuery(query, size);
+            case CASE_SENSITIVE -> buildCaseSensitiveQuery(query, size);
+            case FULL_MATCH -> buildFullMatchQuery(query, size);
+        };
+    }
+
+    /**
+     * Build case insensitive partial match query (default behavior)
+     */
+    private String buildCaseInsensitiveQuery(String query, int size) {
+        return String.format("""
+            {
+              "size": %d,
+              "query": {
+                "multi_match": {
+                  "query": "%s",
+                  "type": "best_fields",
+                  "fields": ["*"],
+                  "fuzziness": "AUTO"
+                }
+              }
+            }
+            """, size, escapeJsonString(query));
+    }
+
+    /**
+     * Build case sensitive partial match query
+     * Uses wildcard queries which preserve case sensitivity
+     */
+    private String buildCaseSensitiveQuery(String query, int size) {
+        String escapedQuery = escapeWildcardString(query);
+        return String.format("""
+            {
+              "size": %d,
+              "query": {
+                "bool": {
+                  "should": [
+                    {
+                      "wildcard": {
+                        "title": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "gameTitle": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "name": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "homeTeam.name": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "awayTeam.name": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "awayTeam.shortName": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "homeTeam.shortName": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "competition.name": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "venue": "*%s*"
+                      }
+                    },
+                    {
+                      "wildcard": {
+                        "referee": "*%s*"
+                      }
+                    }
+                  ],
+                  "minimum_should_match": 1
+                }
+              }
+            }
+            """, size, escapedQuery, escapedQuery, escapedQuery, escapedQuery, escapedQuery,
+                escapedQuery, escapedQuery, escapedQuery, escapedQuery, escapedQuery);
+    }
+
+    /**
+     * Build full string match query (case insensitive)
+     * Uses exact phrase matching to find complete string matches
+     */
+    private String buildFullMatchQuery(String query, int size) {
+        String escapedQuery = escapeJsonString(query);
+        return String.format("""
+            {
+              "size": %d,
+              "query": {
+                "bool": {
+                  "should": [
+                    {
+                      "match_phrase": {
+                        "title": {
+                          "query": "%s",
+                          "slop": 0
+                        }
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "gameTitle": {
+                          "query": "%s",
+                          "slop": 0
+                        }
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "name": {
+                          "query": "%s",
+                          "slop": 0
+                        }
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "homeTeam.name": {
+                          "query": "%s",
+                          "slop": 0
+                        }
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "awayTeam.name": {
+                          "query": "%s",
+                          "slop": 0
+                        }
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "competition.name": {
+                          "query": "%s",
+                          "slop": 0
+                        }
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "venue": {
+                          "query": "%s",
+                          "slop": 0
+                        }
+                      }
+                    }
+                  ],
+                  "minimum_should_match": 1
+                }
+              }
+            }
+            """, size, escapedQuery, escapedQuery, escapedQuery, escapedQuery, escapedQuery, escapedQuery, escapedQuery);
+    }
+
+    /**
+     * Escape special characters in JSON strings
+     */
+    private String escapeJsonString(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
+    }
+
+    /**
+     * Escape special characters for wildcard queries
+     */
+    private String escapeWildcardString(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("*", "\\*")
+                   .replace("?", "\\?")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
     }
 
     /**

@@ -81,6 +81,29 @@ The application provides the following search endpoints for retrieving data from
   - `q` (optional): Search query string
   - `size` (optional, default: 10): Number of results to return
 
+### Unified Search API
+
+The application also provides a unified search endpoint that can search across all entity types with configurable search modes:
+
+**GET** `/api/search` - Unified search across all types
+- Query parameters:
+  - `q` (optional): Search query string
+  - `type` (optional): Specific entity type to search
+  - `id` (optional): Find specific entity by ID (requires type)
+  - `size` (optional, default: 10): Number of results to return
+  - `mode` (optional, default: case_insensitive): Search mode
+
+**GET** `/api/search/modes` - Get available search modes
+
+#### Search Modes
+
+- **`case_insensitive`** (default): Case insensitive partial matching
+  - Example: `"game"` matches `"Game 21"`, `"Player Game"`, `"GAME"`
+- **`case_sensitive`**: Case sensitive partial matching
+  - Example: `"Game"` matches `"Game 21"`, `"Player Game"` but not `"game"` or `"GAME"`
+- **`full_match`**: Full string match (case insensitive)
+  - Example: `"Player of the Match Game 21"` only matches exact title, not `"Game 21"` or `"Game 22"`
+
 ### Example Usage
 ```bash
 # Get all matches (up to 10)
@@ -91,6 +114,21 @@ curl "http://localhost:8082/api/matches?q=Barcelona&size=5"
 
 # Get all predictions
 curl "http://localhost:8082/api/predictions"
+
+# Unified search across all types
+curl "http://localhost:8082/api/search?q=Barcelona&size=10"
+
+# Search specific type with case sensitive mode
+curl "http://localhost:8082/api/search?type=matches&q=Barcelona&mode=case_sensitive"
+
+# Full match search for exact titles
+curl "http://localhost:8082/api/search?q=Player%20of%20the%20Match%20Game%2021&mode=full_match"
+
+# Find specific entity by ID
+curl "http://localhost:8082/api/search?type=matches&id=1"
+
+# Get available search modes
+curl "http://localhost:8082/api/search/modes"
 ```
 
 ## Elasticsearch Setup with Dev Services
