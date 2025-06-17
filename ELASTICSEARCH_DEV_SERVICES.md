@@ -149,12 +149,34 @@ Tests automatically use isolated Elasticsearch containers:
 
 ## 📝 Sample Data
 
-The application automatically loads sample data when Elasticsearch becomes available:
+The application automatically loads sample data when Elasticsearch becomes available. You can configure the amount and type of data loaded:
 
-- **Football Matches**: Sample match data
-- **Predictions**: Sample prediction data  
-- **Quiz Games**: Sample quiz data
-- **Player Games**: Sample player of the match games
+### Sample Data Modes
+
+Configure in `application.properties`:
+```properties
+app.sample-data.mode=BASIC
+app.sample-data.records-per-type=2500
+```
+
+**Available modes:**
+- **`NONE`** - No sample data
+- **`BASIC`** - Few records for development (default)
+- **`PERFORMANCE_SMALL`** - Configurable performance data (default: 10k total)
+- **`PERFORMANCE_LARGE`** - Large dataset (1M records) for stress testing
+
+### Quick Start Examples
+
+```bash
+# Basic development (default)
+./mvnw quarkus:dev
+
+# Performance testing with 10k records
+./mvnw quarkus:dev -Dquarkus.profile=dev-performance
+
+# Stress testing with 1M records
+./mvnw quarkus:dev -Dquarkus.profile=stress-test
+```
 
 Data initialization happens in the background and doesn't block application startup.
 

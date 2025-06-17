@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.acme.search.dto.football.Match;
+import org.acme.search.dto.football.SimpleMatch;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
+import org.acme.search.dto.potm.PlayerOfTheMatchGame;
 import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.acme.search.dto.UnifiedSearchResponse;
@@ -38,13 +39,13 @@ public class SearchService {
     /**
      * Search for football matches
      */
-    public List<Match> searchMatches(String query, int size) throws IOException {
+    public List<SimpleMatch> searchMatches(String query, int size) throws IOException {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/football_matches/_search");
         request.setJsonEntity(searchQuery);
 
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, Match.class);
+        return parseSearchResponse(response, SimpleMatch.class);
     }
 
     /**
@@ -86,11 +87,11 @@ public class SearchService {
     /**
      * Find a football match by ID
      */
-    public Optional<Match> findMatchById(Long id) throws IOException {
+    public Optional<SimpleMatch> findMatchById(Long id) throws IOException {
         Request request = new Request("GET", "/football_matches/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, Match.class);
+            return parseGetResponse(response, SimpleMatch.class);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -146,7 +147,7 @@ public class SearchService {
         // Search each type with a smaller size to distribute results
         int sizePerType = Math.max(1, size / 4); // Divide size among 4 types
 
-        List<Match> matches = searchMatches(query, sizePerType);
+        List<SimpleMatch> matches = searchMatches(query, sizePerType);
         List<GameInstance> predictions = searchPredictions(query, sizePerType);
         List<ClassicQuizPublicDto> quizGames = searchQuizGames(query, sizePerType);
         List<PlayerOfTheMatch> playerGames = searchPlayerGames(query, sizePerType);

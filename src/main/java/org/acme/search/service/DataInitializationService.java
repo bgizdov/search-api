@@ -6,10 +6,13 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import org.acme.search.dto.football.Match;
+import org.acme.search.config.SampleDataConfig;
+import org.acme.search.dto.football.SimpleMatch;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
+import org.acme.search.dto.potm.PlayerOfTheMatchGame;
 import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
+import org.acme.search.util.PerformanceDataGenerator;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
 import org.jboss.logging.Logger;
@@ -29,6 +32,9 @@ public class DataInitializationService {
     @Inject
     RestClient restClient;
 
+    @Inject
+    SampleDataConfig sampleDataConfig;
+
     private final ObjectMapper objectMapper;
 
     public DataInitializationService() {
@@ -42,8 +48,17 @@ public class DataInitializationService {
             try {
                 // Wait a bit for Elasticsearch to be ready (Dev Services need time to start)
                 Thread.sleep(10000);
+
+                SampleDataConfig.Mode mode = sampleDataConfig.mode();
+                LOG.infof("Sample data mode: %s", mode);
+
+                if (mode == SampleDataConfig.Mode.NONE) {
+                    LOG.info("Sample data loading is disabled");
+                    return;
+                }
+
                 LOG.info("Initializing sample data in Elasticsearch...");
-                initializeSampleData();
+                initializeSampleData(mode);
                 LOG.info("Sample data initialization completed.");
             } catch (Exception e) {
                 LOG.warn("Failed to initialize sample data: " + e.getMessage());
@@ -52,31 +67,58 @@ public class DataInitializationService {
         }).start();
     }
 
-    private void initializeSampleData() throws Exception {
+    private void initializeSampleData(SampleDataConfig.Mode mode) throws Exception {
+        switch (mode) {
+            case BASIC -> {
+                LOG.info("Loading basic sample data...");
+                createBasicSampleData();
+            }
+            case PERFORMANCE_SMALL -> {
+                LOG.info("Loading performance test data (small)...");
+                int recordsPerType = Math.max(1, sampleDataConfig.recordsPerType());
+                createPerformanceData(recordsPerType);
+            }
+            case PERFORMANCE_LARGE -> {
+                LOG.info("Loading performance test data (large)...");
+                createPerformanceData(250_000); // 1M total records (250k per type)
+            }
+            default -> {
+                LOG.warn("Unknown sample data mode: " + mode);
+                createBasicSampleData();
+            }
+        }
+    }
+
+    private void createBasicSampleData() throws Exception {
         // Create sample football matches
         createSampleMatches();
-        
+
         // Create sample predictions
         createSamplePredictions();
-        
+
         // Create sample quiz games
         createSampleQuizGames();
-        
+
         // Create sample player games
         createSamplePlayerGames();
     }
 
+    private void createPerformanceData(int recordsPerType) throws Exception {
+        PerformanceDataGenerator generator = new PerformanceDataGenerator(restClient);
+        generator.generatePerformanceData(recordsPerType);
+    }
+
     private void createSampleMatches() throws Exception {
-        List<Match> matches = List.of(
-            new Match(1L, "Barcelona", "Real Madrid", 2, 1,
+        List<SimpleMatch> matches = List.of(
+            new SimpleMatch(1L, "Barcelona", "Real Madrid", 2, 1,
                 LocalDateTime.now().minusDays(1), "Camp Nou", "La Liga", "FINISHED"),
-            new Match(2L, "Manchester United", "Liverpool", 1, 3,
+            new SimpleMatch(2L, "Manchester United", "Liverpool", 1, 3,
                 LocalDateTime.now().minusDays(2), "Old Trafford", "Premier League", "FINISHED"),
-            new Match(3L, "Bayern Munich", "Borussia Dortmund", null, null,
+            new SimpleMatch(3L, "Bayern Munich", "Borussia Dortmund", null, null,
                 LocalDateTime.now().plusDays(1), "Allianz Arena", "Bundesliga", "SCHEDULED")
         );
 
-        for (Match match : matches) {
+        for (SimpleMatch match : matches) {
             indexDocument("football_matches", match.id().toString(), match);
         }
     }

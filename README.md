@@ -119,11 +119,72 @@ curl "http://localhost:8082/health/elasticsearch"
 
 ### Sample Data
 
-The application automatically creates sample data:
-- `football_matches` - Sample football match data
-- `predictions` - Sample match predictions
-- `quiz_games` - Sample quiz games
-- `player_games` - Sample player of the match games
+The application automatically creates sample data based on configuration:
+
+### Sample Data Modes
+
+Configure sample data loading in `application.properties`:
+
+```properties
+# Sample Data Configuration
+# Options: NONE, BASIC, PERFORMANCE_SMALL, PERFORMANCE_LARGE
+app.sample-data.mode=BASIC
+app.sample-data.records-per-type=2500
+```
+
+**Available modes:**
+
+- **`NONE`** - No sample data loaded
+- **`BASIC`** - Basic sample data (few records for development)
+  - `football_matches` - 3 sample matches
+  - `predictions` - 3 sample predictions
+  - `quiz_games` - 2 sample quiz games
+  - `player_games` - 2 sample player games
+
+- **`PERFORMANCE_SMALL`** - Performance test data (configurable size)
+  - Uses `app.sample-data.records-per-type` setting (default: 2,500 per type = 10k total)
+  - Good for testing search performance with moderate data
+
+- **`PERFORMANCE_LARGE`** - Large performance test data
+  - 250,000 records per type (1 million total records)
+  - Suitable for stress testing and performance benchmarking
+
+### Performance Data Features
+
+When using `PERFORMANCE_SMALL` or `PERFORMANCE_LARGE` modes:
+
+- **Realistic data variety**: Multiple teams, venues, competitions, users
+- **Bulk loading**: Efficient batch insertion with 1000-record batches
+- **Progress logging**: Shows insertion progress for large datasets
+- **Automatic indexing**: Refreshes Elasticsearch indices after loading
+- **Reference integrity**: Predictions and player games reference match IDs
+
+### Quick Start with Performance Data
+
+**Basic development (default):**
+```bash
+./mvnw quarkus:dev
+# Loads basic sample data (few records)
+```
+
+**Performance testing (10k records):**
+```bash
+./mvnw quarkus:dev -Dquarkus.profile=dev-performance
+# Loads 2,500 records per type (10k total)
+```
+
+**Stress testing (1M records):**
+```bash
+./mvnw quarkus:dev -Dquarkus.profile=stress-test
+# Loads 250k records per type (1M total)
+# Note: This may take several minutes to load
+```
+
+**Custom configuration:**
+```bash
+./mvnw quarkus:dev -Dapp.sample-data.mode=PERFORMANCE_SMALL -Dapp.sample-data.records-per-type=5000
+# Loads 5k records per type (20k total)
+```
 
 ### Speed Up Development
 
