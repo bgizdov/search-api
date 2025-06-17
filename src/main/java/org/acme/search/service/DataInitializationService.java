@@ -8,7 +8,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.acme.search.dto.football.Match;
 import org.acme.search.dto.PlayerOfTheMatchGame;
-import org.acme.search.dto.PredictionToMatch;
+import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.QuizGame;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
@@ -81,16 +81,16 @@ public class DataInitializationService {
     }
 
     private void createSamplePredictions() throws Exception {
-        List<PredictionToMatch> predictions = List.of(
-            new PredictionToMatch(1L, 1L, "user1", 2, 1, "HOME_WIN", 
-                LocalDateTime.now().minusHours(2), 85, true),
-            new PredictionToMatch(2L, 2L, "user2", 0, 2, "AWAY_WIN", 
-                LocalDateTime.now().minusHours(3), 70, false),
-            new PredictionToMatch(3L, 3L, "user1", 3, 1, "HOME_WIN", 
-                LocalDateTime.now().minusMinutes(30), 90, null)
+        List<GameInstance> predictions = List.of(
+            new GameInstance(1L, 1L, "user1", 2, 1, "HOME_WIN",
+                LocalDateTime.now().minusHours(2), 85, true, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
+            new GameInstance(2L, 2L, "user2", 0, 2, "AWAY_WIN",
+                LocalDateTime.now().minusHours(3), 70, false, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
+            new GameInstance(3L, 3L, "user1", 3, 1, "HOME_WIN",
+                LocalDateTime.now().minusMinutes(30), 90, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
         );
 
-        for (PredictionToMatch prediction : predictions) {
+        for (GameInstance prediction : predictions) {
             indexDocument("predictions", prediction.id().toString(), prediction);
         }
     }

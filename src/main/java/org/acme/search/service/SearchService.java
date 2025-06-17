@@ -6,7 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.acme.search.dto.football.Match;
 import org.acme.search.dto.PlayerOfTheMatchGame;
-import org.acme.search.dto.PredictionToMatch;
+import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.QuizGame;
 import org.acme.search.dto.UnifiedSearchResponse;
 import org.elasticsearch.client.Request;
@@ -50,13 +50,13 @@ public class SearchService {
     /**
      * Search for predictions
      */
-    public List<PredictionToMatch> searchPredictions(String query, int size) throws IOException {
+    public List<GameInstance> searchPredictions(String query, int size) throws IOException {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/predictions/_search");
         request.setJsonEntity(searchQuery);
-        
+
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, PredictionToMatch.class);
+        return parseSearchResponse(response, GameInstance.class);
     }
 
     /**
@@ -100,11 +100,11 @@ public class SearchService {
     /**
      * Find a prediction by ID
      */
-    public Optional<PredictionToMatch> findPredictionById(Long id) throws IOException {
+    public Optional<GameInstance> findPredictionById(Long id) throws IOException {
         Request request = new Request("GET", "/predictions/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, PredictionToMatch.class);
+            return parseGetResponse(response, GameInstance.class);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -147,7 +147,7 @@ public class SearchService {
         int sizePerType = Math.max(1, size / 4); // Divide size among 4 types
 
         List<Match> matches = searchMatches(query, sizePerType);
-        List<PredictionToMatch> predictions = searchPredictions(query, sizePerType);
+        List<GameInstance> predictions = searchPredictions(query, sizePerType);
         List<QuizGame> quizGames = searchQuizGames(query, sizePerType);
         List<PlayerOfTheMatchGame> playerGames = searchPlayerGames(query, sizePerType);
 

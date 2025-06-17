@@ -1,6 +1,7 @@
 package org.acme.search.dto;
 
 import org.acme.search.dto.football.Match;
+import org.acme.search.dto.predictor.GameInstance;
 import java.util.List;
 
 /**
@@ -8,7 +9,7 @@ import java.util.List;
  */
 public record UnifiedSearchResponse(
     List<Match> matches,
-    List<PredictionToMatch> predictions,
+    List<GameInstance> predictions,
     List<QuizGame> quizGames,
     List<PlayerOfTheMatchGame> playerGames,
     int totalResults
@@ -19,7 +20,7 @@ public record UnifiedSearchResponse(
      */
     public static UnifiedSearchResponse of(
             List<Match> matches,
-            List<PredictionToMatch> predictions,
+            List<GameInstance> predictions,
             List<QuizGame> quizGames,
             List<PlayerOfTheMatchGame> playerGames) {
 
