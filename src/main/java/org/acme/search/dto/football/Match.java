@@ -1,19 +1,36 @@
 package org.acme.search.dto.football;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
- * DTO representing a football match
+ * DTO representing a football match for search purposes
+ * Based on Match2 entity but simplified for search operations
  */
 public record Match(
-    Long id,
-    String homeTeam,
-    String awayTeam,
-    Integer homeScore,
-    Integer awayScore,
-    LocalDateTime matchDate,
+    String id,
+    Date kickoffAt,
+    Date finishedAt,
+    Date updatedAt,
+    MatchStatus status,
+    Team homeTeam,
+    Team awayTeam,
+    Competition competition,
+    Byte goalsFullTimeHome,
+    Byte goalsFullTimeAway,
+    Byte goalsHalfTimeHome,
+    Byte goalsHalfTimeAway,
+    Byte goalsExtraTimeHome,
+    Byte goalsExtraTimeAway,
+    Byte goalsAggregateHome,
+    Byte goalsAggregateAway,
+    Byte goalsPenaltyHome,
+    Byte goalsPenaltyAway,
     String venue,
-    String competition,
-    String status
+    String referee,
+    Boolean lineupsConfirmed,
+    Date startedAt,
+    String minute,
+    Boolean isDeleted,
+    Boolean undecided
 ) {
 }

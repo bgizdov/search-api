@@ -4,9 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.acme.search.dto.football.SimpleMatch;
+import org.acme.search.dto.football.Match;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
-import org.acme.search.dto.potm.PlayerOfTheMatchGame;
 import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.acme.search.dto.UnifiedSearchResponse;
@@ -39,19 +38,26 @@ public class SearchService {
     /**
      * Search for football matches
      */
-    public List<SimpleMatch> searchMatches(String query, int size) throws IOException {
+    public List<Match> searchFootballMatches(String query, int size) throws IOException {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/football_matches/_search");
         request.setJsonEntity(searchQuery);
 
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, SimpleMatch.class);
+        return parseSearchResponse(response, Match.class);
     }
 
     /**
-     * Search for predictions
+     * Search for football matches (legacy method name for backward compatibility)
      */
-    public List<GameInstance> searchPredictions(String query, int size) throws IOException {
+    public List<Match> searchMatches(String query, int size) throws IOException {
+        return searchFootballMatches(query, size);
+    }
+
+    /**
+     * Search for game instances (predictions)
+     */
+    public List<GameInstance> searchGameInstances(String query, int size) throws IOException {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/predictions/_search");
         request.setJsonEntity(searchQuery);
@@ -61,9 +67,16 @@ public class SearchService {
     }
 
     /**
-     * Search for quiz games
+     * Search for predictions (legacy method name for backward compatibility)
      */
-    public List<ClassicQuizPublicDto> searchQuizGames(String query, int size) throws IOException {
+    public List<GameInstance> searchPredictions(String query, int size) throws IOException {
+        return searchGameInstances(query, size);
+    }
+
+    /**
+     * Search for classic quiz games
+     */
+    public List<ClassicQuizPublicDto> searchClassicQuizzes(String query, int size) throws IOException {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/quiz_games/_search");
         request.setJsonEntity(searchQuery);
@@ -73,9 +86,16 @@ public class SearchService {
     }
 
     /**
+     * Search for quiz games (legacy method name for backward compatibility)
+     */
+    public List<ClassicQuizPublicDto> searchQuizGames(String query, int size) throws IOException {
+        return searchClassicQuizzes(query, size);
+    }
+
+    /**
      * Search for player of the match games
      */
-    public List<PlayerOfTheMatch> searchPlayerGames(String query, int size) throws IOException {
+    public List<PlayerOfTheMatch> searchPlayerOfTheMatchGames(String query, int size) throws IOException {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/player_games/_search");
         request.setJsonEntity(searchQuery);
@@ -85,13 +105,20 @@ public class SearchService {
     }
 
     /**
+     * Search for player games (legacy method name for backward compatibility)
+     */
+    public List<PlayerOfTheMatch> searchPlayerGames(String query, int size) throws IOException {
+        return searchPlayerOfTheMatchGames(query, size);
+    }
+
+    /**
      * Find a football match by ID
      */
-    public Optional<SimpleMatch> findMatchById(Long id) throws IOException {
+    public Optional<Match> findFootballMatchById(Long id) throws IOException {
         Request request = new Request("GET", "/football_matches/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, SimpleMatch.class);
+            return parseGetResponse(response, Match.class);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -99,9 +126,16 @@ public class SearchService {
     }
 
     /**
-     * Find a prediction by ID
+     * Find a match by ID (legacy method name for backward compatibility)
      */
-    public Optional<GameInstance> findPredictionById(Long id) throws IOException {
+    public Optional<Match> findMatchById(Long id) throws IOException {
+        return findFootballMatchById(id);
+    }
+
+    /**
+     * Find a game instance by ID
+     */
+    public Optional<GameInstance> findGameInstanceById(Long id) throws IOException {
         Request request = new Request("GET", "/predictions/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
@@ -113,9 +147,16 @@ public class SearchService {
     }
 
     /**
-     * Find a quiz game by ID
+     * Find a prediction by ID (legacy method name for backward compatibility)
      */
-    public Optional<ClassicQuizPublicDto> findQuizGameById(Long id) throws IOException {
+    public Optional<GameInstance> findPredictionById(Long id) throws IOException {
+        return findGameInstanceById(id);
+    }
+
+    /**
+     * Find a classic quiz by ID
+     */
+    public Optional<ClassicQuizPublicDto> findClassicQuizById(Long id) throws IOException {
         Request request = new Request("GET", "/quiz_games/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
@@ -127,9 +168,16 @@ public class SearchService {
     }
 
     /**
-     * Find a player game by ID
+     * Find a quiz game by ID (legacy method name for backward compatibility)
      */
-    public Optional<PlayerOfTheMatch> findPlayerGameById(Long id) throws IOException {
+    public Optional<ClassicQuizPublicDto> findQuizGameById(Long id) throws IOException {
+        return findClassicQuizById(id);
+    }
+
+    /**
+     * Find a player of the match game by ID
+     */
+    public Optional<PlayerOfTheMatch> findPlayerOfTheMatchGameById(Long id) throws IOException {
         Request request = new Request("GET", "/player_games/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
@@ -141,18 +189,25 @@ public class SearchService {
     }
 
     /**
+     * Find a player game by ID (legacy method name for backward compatibility)
+     */
+    public Optional<PlayerOfTheMatch> findPlayerGameById(Long id) throws IOException {
+        return findPlayerOfTheMatchGameById(id);
+    }
+
+    /**
      * Search across all entity types when no type is specified
      */
     public UnifiedSearchResponse searchAllTypes(String query, int size) throws IOException {
         // Search each type with a smaller size to distribute results
         int sizePerType = Math.max(1, size / 4); // Divide size among 4 types
 
-        List<SimpleMatch> matches = searchMatches(query, sizePerType);
-        List<GameInstance> predictions = searchPredictions(query, sizePerType);
-        List<ClassicQuizPublicDto> quizGames = searchQuizGames(query, sizePerType);
-        List<PlayerOfTheMatch> playerGames = searchPlayerGames(query, sizePerType);
+        List<Match> footballMatches = searchFootballMatches(query, sizePerType);
+        List<GameInstance> gameInstances = searchGameInstances(query, sizePerType);
+        List<ClassicQuizPublicDto> classicQuizzes = searchClassicQuizzes(query, sizePerType);
+        List<PlayerOfTheMatch> playerOfTheMatchGames = searchPlayerOfTheMatchGames(query, sizePerType);
 
-        return UnifiedSearchResponse.of(matches, predictions, quizGames, playerGames);
+        return UnifiedSearchResponse.of(footballMatches, gameInstances, classicQuizzes, playerOfTheMatchGames);
     }
 
     /**
@@ -160,32 +215,32 @@ public class SearchService {
      */
     public Object unifiedSearch(String type, Long id, String query, int size) throws IOException {
         return switch (type.toLowerCase()) {
-            case "matches" -> {
+            case "matches", "football-matches" -> {
                 if (id != null) {
-                    yield findMatchById(id);
+                    yield findFootballMatchById(id);
                 } else {
-                    yield searchMatches(query, size);
+                    yield searchFootballMatches(query, size);
                 }
             }
-            case "predictions" -> {
+            case "predictions", "game-instances" -> {
                 if (id != null) {
-                    yield findPredictionById(id);
+                    yield findGameInstanceById(id);
                 } else {
-                    yield searchPredictions(query, size);
+                    yield searchGameInstances(query, size);
                 }
             }
-            case "quiz-games" -> {
+            case "quiz-games", "classic-quizzes" -> {
                 if (id != null) {
-                    yield findQuizGameById(id);
+                    yield findClassicQuizById(id);
                 } else {
-                    yield searchQuizGames(query, size);
+                    yield searchClassicQuizzes(query, size);
                 }
             }
-            case "player-games" -> {
+            case "player-games", "player-of-the-match-games" -> {
                 if (id != null) {
-                    yield findPlayerGameById(id);
+                    yield findPlayerOfTheMatchGameById(id);
                 } else {
-                    yield searchPlayerGames(query, size);
+                    yield searchPlayerOfTheMatchGames(query, size);
                 }
             }
             default -> throw new IllegalArgumentException("Unsupported type: " + type + ". Supported types: matches, predictions, quiz-games, player-games");

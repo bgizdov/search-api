@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DTO representing a player of the match game (replaces PlayerOfTheMatchGame)
+ * DTO representing a player of the match game
  */
 public record PlayerOfTheMatch(
     Long id,
@@ -19,7 +19,7 @@ public record PlayerOfTheMatch(
     LocalDateTime submissionTime,
     Boolean isCorrect,
     String gameStatus, // "ACTIVE", "COMPLETED", "EXPIRED"
-    String matchIdStr, // Original matchId as string
-    Map<String, Integer> votes // Vote counts for each player
+    String matchIdStr,
+    Map<String, Integer> votes
 ) {
 }

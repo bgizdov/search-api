@@ -58,31 +58,58 @@ public class PerformanceDataGenerator {
     }
     
     private void insertBulkMatches(int count) throws Exception {
-        String[] teams = {"Barcelona", "Real Madrid", "Manchester United", "Liverpool", "Bayern Munich",
+        String[] teamNames = {"Barcelona", "Real Madrid", "Manchester United", "Liverpool", "Bayern Munich",
             "Borussia Dortmund", "PSG", "Manchester City", "Arsenal", "Chelsea", "Juventus", "AC Milan",
             "Inter Milan", "Atletico Madrid", "Valencia", "Sevilla", "Napoli", "Roma", "Lazio", "Atalanta"};
         String[] venues = {"Camp Nou", "Santiago Bernabeu", "Old Trafford", "Anfield", "Allianz Arena",
             "Signal Iduna Park", "Parc des Princes", "Etihad Stadium", "Emirates Stadium", "Stamford Bridge"};
-        String[] competitions = {"La Liga", "Premier League", "Bundesliga", "Ligue 1", "Serie A", "Champions League"};
-        String[] statuses = {"FINISHED", "SCHEDULED", "LIVE", "POSTPONED"};
+        String[] competitionNames = {"La Liga", "Premier League", "Bundesliga", "Ligue 1", "Serie A", "Champions League"};
+        String[] referees = {"Carlos del Cerro Grande", "Michael Oliver", "Felix Brych", "Daniele Orsato", "Clement Turpin"};
 
         StringBuilder bulkBody = new StringBuilder();
         int batchSize = 1000; // Process in batches of 1000
 
         for (int i = 0; i < count; i++) {
-            long id = 1000000L + i; // Start from 1M to avoid conflicts
-            String homeTeam = teams[i % teams.length];
-            String awayTeam = teams[(i + 1) % teams.length];
+            String id = String.valueOf(1000000L + i); // Start from 1M to avoid conflicts
+            String homeTeamName = teamNames[i % teamNames.length];
+            String awayTeamName = teamNames[(i + 1) % teamNames.length];
             String venue = venues[i % venues.length];
-            String competition = competitions[i % competitions.length];
-            String status = statuses[i % statuses.length];
+            String competitionName = competitionNames[i % competitionNames.length];
+            String referee = referees[i % referees.length];
+
+            boolean isFinished = i % 4 != 3; // 75% finished, 25% scheduled
+            long kickoffTime = System.currentTimeMillis() - (i % 7) * 24 * 60 * 60 * 1000L; // Spread over last week
 
             // Create index action
-            bulkBody.append(String.format("{\"index\":{\"_index\":\"football_matches\",\"_id\":\"%d\"}}\n", id));
+            bulkBody.append(String.format("{\"index\":{\"_index\":\"football_matches\",\"_id\":\"%s\"}}\n", id));
 
-            // Create document
-            String matchData = String.format("{\"id\":%d,\"homeTeam\":\"%s\",\"awayTeam\":\"%s\",\"homeScore\":%d,\"awayScore\":%d,\"matchDate\":\"2024-01-15T20:00:00\",\"venue\":\"%s\",\"competition\":\"%s\",\"status\":\"%s\"}\n",
-                id, homeTeam, awayTeam, i % 5, (i + 1) % 5, venue, competition, status);
+            // Create simplified document structure for performance
+            String matchData = String.format(
+                "{\"id\":\"%s\",\"kickoffAt\":%d,\"finishedAt\":%s,\"updatedAt\":%d," +
+                "\"status\":{\"id\":%d,\"type\":\"%s\",\"name\":\"%s\",\"code\":\"%s\"}," +
+                "\"homeTeam\":{\"id\":\"team-%d\",\"name\":\"%s\",\"shortName\":\"%s\"}," +
+                "\"awayTeam\":{\"id\":\"team-%d\",\"name\":\"%s\",\"shortName\":\"%s\"}," +
+                "\"competition\":{\"id\":\"comp-%d\",\"name\":\"%s\"}," +
+                "\"goalsFullTimeHome\":%s,\"goalsFullTimeAway\":%s," +
+                "\"goalsHalfTimeHome\":%s,\"goalsHalfTimeAway\":%s," +
+                "\"venue\":\"%s\",\"referee\":\"%s\",\"lineupsConfirmed\":%s," +
+                "\"startedAt\":%s,\"minute\":\"%s\",\"isDeleted\":false,\"undecided\":false}\n",
+                id, kickoffTime,
+                isFinished ? String.valueOf(kickoffTime + 90 * 60 * 1000) : "null",
+                System.currentTimeMillis(),
+                isFinished ? 1 : 2, isFinished ? "finished" : "scheduled",
+                isFinished ? "Finished" : "Scheduled", isFinished ? "FT" : "NS",
+                i % teamNames.length, homeTeamName, homeTeamName.split(" ")[0],
+                (i + 1) % teamNames.length, awayTeamName, awayTeamName.split(" ")[0],
+                i % competitionNames.length, competitionName,
+                isFinished ? String.valueOf(i % 5) : "null",
+                isFinished ? String.valueOf((i + 1) % 5) : "null",
+                isFinished ? String.valueOf(i % 3) : "null",
+                isFinished ? String.valueOf((i + 1) % 3) : "null",
+                venue, referee, isFinished ? "true" : "false",
+                isFinished ? String.valueOf(kickoffTime) : "null",
+                isFinished ? "90" : "null"
+            );
             bulkBody.append(matchData);
 
             // Send batch when we reach batch size or at the end

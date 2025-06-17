@@ -4,14 +4,9 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.acme.search.dto.football.SimpleMatch;
-import org.acme.search.dto.potm.PlayerOfTheMatch;
-import org.acme.search.dto.predictor.GameInstance;
-import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.acme.search.dto.UnifiedSearchResponse;
 import org.acme.search.service.SearchService;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 

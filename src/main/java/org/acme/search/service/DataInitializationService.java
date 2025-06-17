@@ -7,9 +7,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.acme.search.config.SampleDataConfig;
-import org.acme.search.dto.football.SimpleMatch;
+import org.acme.search.dto.football.*;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
-import org.acme.search.dto.potm.PlayerOfTheMatchGame;
 import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.acme.search.util.PerformanceDataGenerator;
@@ -18,6 +17,7 @@ import org.elasticsearch.client.RestClient;
 import org.jboss.logging.Logger;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -109,17 +109,47 @@ public class DataInitializationService {
     }
 
     private void createSampleMatches() throws Exception {
-        List<SimpleMatch> matches = List.of(
-            new SimpleMatch(1L, "Barcelona", "Real Madrid", 2, 1,
-                LocalDateTime.now().minusDays(1), "Camp Nou", "La Liga", "FINISHED"),
-            new SimpleMatch(2L, "Manchester United", "Liverpool", 1, 3,
-                LocalDateTime.now().minusDays(2), "Old Trafford", "Premier League", "FINISHED"),
-            new SimpleMatch(3L, "Bayern Munich", "Borussia Dortmund", null, null,
-                LocalDateTime.now().plusDays(1), "Allianz Arena", "Bundesliga", "SCHEDULED")
+        // Create sample countries
+        Country spain = new Country("ES", "Spain", "ESP", "ES");
+        Country england = new Country("GB", "England", "ENG", "GB");
+        Country germany = new Country("DE", "Germany", "GER", "DE");
+
+        // Create sample teams
+        Team barcelona = new Team("barcelona", spain, "Barcelona", "FC Barcelona", "Barca", false, "BAR", "male", false, false);
+        Team realMadrid = new Team("real-madrid", spain, "Real Madrid", "Real Madrid CF", "Real", false, "RMA", "male", false, false);
+        Team manUtd = new Team("man-utd", england, "Manchester United", "Manchester United FC", "Man Utd", false, "MUN", "male", false, false);
+        Team liverpool = new Team("liverpool", england, "Liverpool", "Liverpool FC", "Liverpool", false, "LIV", "male", false, false);
+        Team bayern = new Team("bayern", germany, "Bayern Munich", "FC Bayern München", "Bayern", false, "BAY", "male", false, false);
+        Team dortmund = new Team("dortmund", germany, "Borussia Dortmund", "Borussia Dortmund", "BVB", false, "DOR", "male", false, false);
+
+        // Create sample competitions
+        Competition laLiga = new Competition("la-liga", spain, "male", "league", "La Liga");
+        Competition premierLeague = new Competition("premier-league", england, "male", "league", "Premier League");
+        Competition bundesliga = new Competition("bundesliga", germany, "male", "league", "Bundesliga");
+
+        // Create sample match statuses
+        MatchStatus finished = new MatchStatus((byte) 1, "finished", "Finished", "FT");
+        MatchStatus scheduled = new MatchStatus((byte) 2, "scheduled", "Scheduled", "NS");
+
+        Date now = new Date();
+        Date yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        Date twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        Date tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+        List<Match> matches = List.of(
+            new Match("1", yesterday, yesterday, now, finished, barcelona, realMadrid, laLiga,
+                (byte) 2, (byte) 1, (byte) 1, (byte) 0, null, null, null, null, null, null,
+                "Camp Nou", "Carlos del Cerro Grande", true, yesterday, "90+3", false, false),
+            new Match("2", twoDaysAgo, twoDaysAgo, now, finished, manUtd, liverpool, premierLeague,
+                (byte) 1, (byte) 3, (byte) 0, (byte) 2, null, null, null, null, null, null,
+                "Old Trafford", "Michael Oliver", true, twoDaysAgo, "90+5", false, false),
+            new Match("3", tomorrow, null, now, scheduled, bayern, dortmund, bundesliga,
+                null, null, null, null, null, null, null, null, null, null,
+                "Allianz Arena", "Felix Brych", false, null, null, false, false)
         );
 
-        for (SimpleMatch match : matches) {
-            indexDocument("football_matches", match.id().toString(), match);
+        for (Match match : matches) {
+            indexDocument("football_matches", match.id(), match);
         }
     }
 

@@ -1,6 +1,6 @@
 package org.acme.search.dto;
 
-import org.acme.search.dto.football.SimpleMatch;
+import org.acme.search.dto.football.Match;
 import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
@@ -10,10 +10,10 @@ import java.util.List;
  * DTO representing a unified search response containing multiple types of data
  */
 public record UnifiedSearchResponse(
-    List<SimpleMatch> matches,
-    List<GameInstance> predictions,
-    List<ClassicQuizPublicDto> quizGames,
-    List<PlayerOfTheMatch> playerGames,
+    List<Match> footballMatches,
+    List<GameInstance> games,
+    List<ClassicQuizPublicDto> classicQuizzes,
+    List<PlayerOfTheMatch> playerOfTheMatchGames,
     int totalResults
 ) {
 
@@ -21,13 +21,13 @@ public record UnifiedSearchResponse(
      * Calculate total results across all types
      */
     public static UnifiedSearchResponse of(
-            List<SimpleMatch> matches,
-            List<GameInstance> predictions,
-            List<ClassicQuizPublicDto> quizGames,
-            List<PlayerOfTheMatch> playerGames) {
+            List<Match> footballMatches,
+            List<GameInstance> games,
+            List<ClassicQuizPublicDto> classicQuizzes,
+            List<PlayerOfTheMatch> playerOfTheMatchGames) {
 
-        int total = matches.size() + predictions.size() + quizGames.size() + playerGames.size();
+        int total = footballMatches.size() + games.size() + classicQuizzes.size() + playerOfTheMatchGames.size();
 
-        return new UnifiedSearchResponse(matches, predictions, quizGames, playerGames, total);
+        return new UnifiedSearchResponse(footballMatches, games, classicQuizzes, playerOfTheMatchGames, total);
     }
 }
