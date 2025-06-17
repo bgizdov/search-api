@@ -6,7 +6,7 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import org.acme.search.dto.FootballMatchData;
+import org.acme.search.dto.football.Match;
 import org.acme.search.dto.PlayerOfTheMatchGame;
 import org.acme.search.dto.PredictionToMatch;
 import org.acme.search.dto.QuizGame;
@@ -66,16 +66,16 @@ public class DataInitializationService {
     }
 
     private void createSampleMatches() throws Exception {
-        List<FootballMatchData> matches = List.of(
-            new FootballMatchData(1L, "Barcelona", "Real Madrid", 2, 1, 
+        List<Match> matches = List.of(
+            new Match(1L, "Barcelona", "Real Madrid", 2, 1,
                 LocalDateTime.now().minusDays(1), "Camp Nou", "La Liga", "FINISHED"),
-            new FootballMatchData(2L, "Manchester United", "Liverpool", 1, 3, 
+            new Match(2L, "Manchester United", "Liverpool", 1, 3,
                 LocalDateTime.now().minusDays(2), "Old Trafford", "Premier League", "FINISHED"),
-            new FootballMatchData(3L, "Bayern Munich", "Borussia Dortmund", null, null, 
+            new Match(3L, "Bayern Munich", "Borussia Dortmund", null, null,
                 LocalDateTime.now().plusDays(1), "Allianz Arena", "Bundesliga", "SCHEDULED")
         );
 
-        for (FootballMatchData match : matches) {
+        for (Match match : matches) {
             indexDocument("football_matches", match.id().toString(), match);
         }
     }

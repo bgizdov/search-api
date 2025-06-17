@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.acme.search.dto.FootballMatchData;
+import org.acme.search.dto.football.Match;
 import org.acme.search.dto.PlayerOfTheMatchGame;
 import org.acme.search.dto.PredictionToMatch;
 import org.acme.search.dto.QuizGame;
@@ -38,13 +38,13 @@ public class SearchService {
     /**
      * Search for football matches
      */
-    public List<FootballMatchData> searchMatches(String query, int size) throws IOException {
+    public List<Match> searchMatches(String query, int size) throws IOException {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/football_matches/_search");
         request.setJsonEntity(searchQuery);
-        
+
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, FootballMatchData.class);
+        return parseSearchResponse(response, Match.class);
     }
 
     /**
@@ -86,11 +86,11 @@ public class SearchService {
     /**
      * Find a football match by ID
      */
-    public Optional<FootballMatchData> findMatchById(Long id) throws IOException {
+    public Optional<Match> findMatchById(Long id) throws IOException {
         Request request = new Request("GET", "/football_matches/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, FootballMatchData.class);
+            return parseGetResponse(response, Match.class);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -146,7 +146,7 @@ public class SearchService {
         // Search each type with a smaller size to distribute results
         int sizePerType = Math.max(1, size / 4); // Divide size among 4 types
 
-        List<FootballMatchData> matches = searchMatches(query, sizePerType);
+        List<Match> matches = searchMatches(query, sizePerType);
         List<PredictionToMatch> predictions = searchPredictions(query, sizePerType);
         List<QuizGame> quizGames = searchQuizGames(query, sizePerType);
         List<PlayerOfTheMatchGame> playerGames = searchPlayerGames(query, sizePerType);

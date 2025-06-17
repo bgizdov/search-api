@@ -1,11 +1,11 @@
-package org.acme.search.dto;
+package org.acme.search.dto.football;
 
 import java.time.LocalDateTime;
 
 /**
- * DTO representing football match data
+ * DTO representing a football match
  */
-public record FootballMatchData(
+public record Match(
     Long id,
     String homeTeam,
     String awayTeam,

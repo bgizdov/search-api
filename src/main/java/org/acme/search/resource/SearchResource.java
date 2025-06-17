@@ -4,7 +4,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.acme.search.dto.FootballMatchData;
+import org.acme.search.dto.football.Match;
 import org.acme.search.dto.PlayerOfTheMatchGame;
 import org.acme.search.dto.PredictionToMatch;
 import org.acme.search.dto.QuizGame;
