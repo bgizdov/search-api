@@ -3,6 +3,8 @@ package org.acme.search.dto.predictor;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import org.acme.search.dto.Images;
+import org.acme.search.dto.RelatedEntity;
 
 /**
  * DTO representing a game instance (replaces PredictionToMatch)

@@ -1,4 +1,4 @@
-package org.acme.search.dto.predictor;
+package org.acme.search.dto;
 
 /**
  * DTO representing game images

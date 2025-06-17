@@ -9,7 +9,7 @@ import jakarta.inject.Inject;
 import org.acme.search.dto.football.Match;
 import org.acme.search.dto.PlayerOfTheMatchGame;
 import org.acme.search.dto.predictor.GameInstance;
-import org.acme.search.dto.QuizGame;
+import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
 import org.jboss.logging.Logger;
@@ -96,18 +96,18 @@ public class DataInitializationService {
     }
 
     private void createSampleQuizGames() throws Exception {
-        List<QuizGame> quizGames = List.of(
-            new QuizGame(1L, "Football Trivia", "Test your football knowledge", 
+        List<ClassicQuizPublicDto> quizGames = List.of(
+            new ClassicQuizPublicDto(1L, "Football Trivia", "Test your football knowledge",
                 List.of("Who won the 2022 World Cup?", "Which team has won the most Champions League titles?"),
                 List.of("Argentina", "Real Madrid"),
-                "Sports", 3, 300, LocalDateTime.now().minusDays(1), "admin", true),
-            new QuizGame(2L, "Premier League Quiz", "All about English football", 
+                "Sports", 3, 300, LocalDateTime.now().minusDays(1), "admin", true, null, null, 0, 0, null, null, null, 0, null, null, 0.0f, 0, null, null, false, null, null, 0, 0, null),
+            new ClassicQuizPublicDto(2L, "Premier League Quiz", "All about English football",
                 List.of("Which team won the first Premier League title?", "Who is the top scorer in Premier League history?"),
                 List.of("Manchester United", "Alan Shearer"),
-                "Sports", 4, 600, LocalDateTime.now().minusDays(2), "admin", true)
+                "Sports", 4, 600, LocalDateTime.now().minusDays(2), "admin", true, null, null, 0, 0, null, null, null, 0, null, null, 0.0f, 0, null, null, false, null, null, 0, 0, null)
         );
 
-        for (QuizGame quiz : quizGames) {
+        for (ClassicQuizPublicDto quiz : quizGames) {
             indexDocument("quiz_games", quiz.id().toString(), quiz);
         }
     }

@@ -7,7 +7,7 @@ import jakarta.ws.rs.core.Response;
 import org.acme.search.dto.football.Match;
 import org.acme.search.dto.PlayerOfTheMatchGame;
 import org.acme.search.dto.predictor.GameInstance;
-import org.acme.search.dto.QuizGame;
+import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.acme.search.dto.UnifiedSearchResponse;
 import org.acme.search.service.SearchService;
 

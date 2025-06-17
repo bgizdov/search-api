@@ -7,7 +7,7 @@ import jakarta.inject.Inject;
 import org.acme.search.dto.football.Match;
 import org.acme.search.dto.PlayerOfTheMatchGame;
 import org.acme.search.dto.predictor.GameInstance;
-import org.acme.search.dto.QuizGame;
+import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.acme.search.dto.UnifiedSearchResponse;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
@@ -62,13 +62,13 @@ public class SearchService {
     /**
      * Search for quiz games
      */
-    public List<QuizGame> searchQuizGames(String query, int size) throws IOException {
+    public List<ClassicQuizPublicDto> searchQuizGames(String query, int size) throws IOException {
         String searchQuery = buildSearchQuery(query, size);
         Request request = new Request("POST", "/quiz_games/_search");
         request.setJsonEntity(searchQuery);
-        
+
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, QuizGame.class);
+        return parseSearchResponse(response, ClassicQuizPublicDto.class);
     }
 
     /**
@@ -114,11 +114,11 @@ public class SearchService {
     /**
      * Find a quiz game by ID
      */
-    public Optional<QuizGame> findQuizGameById(Long id) throws IOException {
+    public Optional<ClassicQuizPublicDto> findQuizGameById(Long id) throws IOException {
         Request request = new Request("GET", "/quiz_games/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, QuizGame.class);
+            return parseGetResponse(response, ClassicQuizPublicDto.class);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -148,7 +148,7 @@ public class SearchService {
 
         List<Match> matches = searchMatches(query, sizePerType);
         List<GameInstance> predictions = searchPredictions(query, sizePerType);
-        List<QuizGame> quizGames = searchQuizGames(query, sizePerType);
+        List<ClassicQuizPublicDto> quizGames = searchQuizGames(query, sizePerType);
         List<PlayerOfTheMatchGame> playerGames = searchPlayerGames(query, sizePerType);
 
         return UnifiedSearchResponse.of(matches, predictions, quizGames, playerGames);
