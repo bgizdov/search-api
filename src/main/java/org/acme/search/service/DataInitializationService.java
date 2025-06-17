@@ -7,7 +7,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import org.acme.search.dto.football.Match;
-import org.acme.search.dto.PlayerOfTheMatchGame;
+import org.acme.search.dto.potm.PlayerOfTheMatch;
 import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
 import org.elasticsearch.client.Request;
@@ -16,6 +16,7 @@ import org.jboss.logging.Logger;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service to initialize sample data in Elasticsearch on startup
@@ -113,18 +114,20 @@ public class DataInitializationService {
     }
 
     private void createSamplePlayerGames() throws Exception {
-        List<PlayerOfTheMatchGame> playerGames = List.of(
-            new PlayerOfTheMatchGame(1L, 1L, "El Clasico Player of the Match", 
+        List<PlayerOfTheMatch> playerGames = List.of(
+            new PlayerOfTheMatch(1L, 1L, "El Clasico Player of the Match",
                 List.of("Lionel Messi", "Karim Benzema", "Pedri", "Vinicius Jr."),
-                "Lionel Messi", "user1", "Lionel Messi", 10, 
-                LocalDateTime.now().minusHours(1), true, "COMPLETED"),
-            new PlayerOfTheMatchGame(2L, 2L, "Premier League POTM", 
+                "Lionel Messi", "user1", "Lionel Messi", 10,
+                LocalDateTime.now().minusHours(1), true, "COMPLETED", "1",
+                Map.of("Lionel Messi", 150, "Karim Benzema", 75, "Pedri", 45, "Vinicius Jr.", 30)),
+            new PlayerOfTheMatch(2L, 2L, "Premier League POTM",
                 List.of("Mohamed Salah", "Bruno Fernandes", "Virgil van Dijk", "Marcus Rashford"),
-                "Mohamed Salah", "user2", "Bruno Fernandes", 0, 
-                LocalDateTime.now().minusHours(2), false, "COMPLETED")
+                "Mohamed Salah", "user2", "Bruno Fernandes", 0,
+                LocalDateTime.now().minusHours(2), false, "COMPLETED", "2",
+                Map.of("Mohamed Salah", 200, "Bruno Fernandes", 120, "Virgil van Dijk", 80, "Marcus Rashford", 60))
         );
 
-        for (PlayerOfTheMatchGame game : playerGames) {
+        for (PlayerOfTheMatch game : playerGames) {
             indexDocument("player_games", game.id().toString(), game);
         }
     }

@@ -3,6 +3,7 @@ package org.acme.search.dto;
 import org.acme.search.dto.football.Match;
 import org.acme.search.dto.predictor.GameInstance;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
+import org.acme.search.dto.potm.PlayerOfTheMatch;
 import java.util.List;
 
 /**
@@ -12,7 +13,7 @@ public record UnifiedSearchResponse(
     List<Match> matches,
     List<GameInstance> predictions,
     List<ClassicQuizPublicDto> quizGames,
-    List<PlayerOfTheMatchGame> playerGames,
+    List<PlayerOfTheMatch> playerGames,
     int totalResults
 ) {
 
@@ -23,7 +24,7 @@ public record UnifiedSearchResponse(
             List<Match> matches,
             List<GameInstance> predictions,
             List<ClassicQuizPublicDto> quizGames,
-            List<PlayerOfTheMatchGame> playerGames) {
+            List<PlayerOfTheMatch> playerGames) {
 
         int total = matches.size() + predictions.size() + quizGames.size() + playerGames.size();
 
