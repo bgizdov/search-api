@@ -1,4 +1,4 @@
-package org.acme.search.dto;
+package org.acme.search.dto.common;
 
 /**
  * DTO representing a related entity
