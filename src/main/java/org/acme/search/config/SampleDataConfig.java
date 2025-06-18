@@ -12,8 +12,8 @@ public interface SampleDataConfig {
      * Sample data loading mode
      */
     enum Mode {
-        NONE,           // No sample data
-        BASIC,          // Basic sample data (few records)
+        NONE,               // No sample data
+        BASIC,              // Basic sample data (few records)
         PERFORMANCE_SMALL,  // Performance test data (10k records)
         PERFORMANCE_LARGE   // Performance test data (1M records)
     }

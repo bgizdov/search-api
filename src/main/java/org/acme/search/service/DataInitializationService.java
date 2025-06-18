@@ -109,48 +109,129 @@ public class DataInitializationService {
     }
 
     private void createSampleMatches() throws Exception {
-        // Create sample countries
-        Country spain = new Country("ES", "Spain", "ESP", "ES");
-        Country england = new Country("GB", "England", "ENG", "GB");
-        Country germany = new Country("DE", "Germany", "GER", "DE");
+        // Create simplified match data that works well with Elasticsearch
+        String matchData1 = """
+            {
+                "id": "1",
+                "kickoffAt": %d,
+                "finishedAt": %d,
+                "updatedAt": %d,
+                "status": {
+                    "id": 1,
+                    "type": "finished",
+                    "name": "Finished",
+                    "code": "FT"
+                },
+                "homeTeam": {
+                    "id": "barcelona",
+                    "name": "Barcelona",
+                    "shortName": "Barca"
+                },
+                "awayTeam": {
+                    "id": "real-madrid",
+                    "name": "Real Madrid",
+                    "shortName": "Real"
+                },
+                "competition": {
+                    "id": "la-liga",
+                    "name": "La Liga"
+                },
+                "goalsFullTimeHome": 2,
+                "goalsFullTimeAway": 1,
+                "goalsHalfTimeHome": 1,
+                "goalsHalfTimeAway": 0,
+                "venue": "Camp Nou",
+                "referee": "Carlos del Cerro Grande",
+                "lineupsConfirmed": true,
+                "startedAt": %d,
+                "minute": "90+3",
+                "isDeleted": false,
+                "undecided": false
+            }
+            """;
 
-        // Create sample teams
-        Team barcelona = new Team("barcelona", spain, "Barcelona", "FC Barcelona", "Barca", false, "BAR", "male", false, false);
-        Team realMadrid = new Team("real-madrid", spain, "Real Madrid", "Real Madrid CF", "Real", false, "RMA", "male", false, false);
-        Team manUtd = new Team("man-utd", england, "Manchester United", "Manchester United FC", "Man Utd", false, "MUN", "male", false, false);
-        Team liverpool = new Team("liverpool", england, "Liverpool", "Liverpool FC", "Liverpool", false, "LIV", "male", false, false);
-        Team bayern = new Team("bayern", germany, "Bayern Munich", "FC Bayern München", "Bayern", false, "BAY", "male", false, false);
-        Team dortmund = new Team("dortmund", germany, "Borussia Dortmund", "Borussia Dortmund", "BVB", false, "DOR", "male", false, false);
+        String matchData2 = """
+            {
+                "id": "2",
+                "kickoffAt": %d,
+                "finishedAt": %d,
+                "updatedAt": %d,
+                "status": {
+                    "id": 1,
+                    "type": "finished",
+                    "name": "Finished",
+                    "code": "FT"
+                },
+                "homeTeam": {
+                    "id": "man-utd",
+                    "name": "Manchester United",
+                    "shortName": "Man Utd"
+                },
+                "awayTeam": {
+                    "id": "liverpool",
+                    "name": "Liverpool",
+                    "shortName": "Liverpool"
+                },
+                "competition": {
+                    "id": "premier-league",
+                    "name": "Premier League"
+                },
+                "goalsFullTimeHome": 1,
+                "goalsFullTimeAway": 3,
+                "goalsHalfTimeHome": 0,
+                "goalsHalfTimeAway": 2,
+                "venue": "Old Trafford",
+                "referee": "Michael Oliver",
+                "lineupsConfirmed": true,
+                "startedAt": %d,
+                "minute": "90+5",
+                "isDeleted": false,
+                "undecided": false
+            }
+            """;
 
-        // Create sample competitions
-        Competition laLiga = new Competition("la-liga", spain, "male", "league", "La Liga");
-        Competition premierLeague = new Competition("premier-league", england, "male", "league", "Premier League");
-        Competition bundesliga = new Competition("bundesliga", germany, "male", "league", "Bundesliga");
+        String matchData3 = """
+            {
+                "id": "3",
+                "kickoffAt": %d,
+                "updatedAt": %d,
+                "status": {
+                    "id": 2,
+                    "type": "scheduled",
+                    "name": "Scheduled",
+                    "code": "NS"
+                },
+                "homeTeam": {
+                    "id": "bayern",
+                    "name": "Bayern Munich",
+                    "shortName": "Bayern"
+                },
+                "awayTeam": {
+                    "id": "dortmund",
+                    "name": "Borussia Dortmund",
+                    "shortName": "BVB"
+                },
+                "competition": {
+                    "id": "bundesliga",
+                    "name": "Bundesliga"
+                },
+                "venue": "Allianz Arena",
+                "referee": "Felix Brych",
+                "lineupsConfirmed": false,
+                "isDeleted": false,
+                "undecided": false
+            }
+            """;
 
-        // Create sample match statuses
-        MatchStatus finished = new MatchStatus((byte) 1, "finished", "Finished", "FT");
-        MatchStatus scheduled = new MatchStatus((byte) 2, "scheduled", "Scheduled", "NS");
+        long now = System.currentTimeMillis();
+        long yesterday = now - 24 * 60 * 60 * 1000;
+        long twoDaysAgo = now - 2 * 24 * 60 * 60 * 1000;
+        long tomorrow = now + 24 * 60 * 60 * 1000;
 
-        Date now = new Date();
-        Date yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        Date twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-        Date tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-
-        List<Match> matches = List.of(
-            new Match("1", yesterday, yesterday, now, finished, barcelona, realMadrid, laLiga,
-                (byte) 2, (byte) 1, (byte) 1, (byte) 0, null, null, null, null, null, null,
-                "Camp Nou", "Carlos del Cerro Grande", true, yesterday, "90+3", false, false),
-            new Match("2", twoDaysAgo, twoDaysAgo, now, finished, manUtd, liverpool, premierLeague,
-                (byte) 1, (byte) 3, (byte) 0, (byte) 2, null, null, null, null, null, null,
-                "Old Trafford", "Michael Oliver", true, twoDaysAgo, "90+5", false, false),
-            new Match("3", tomorrow, null, now, scheduled, bayern, dortmund, bundesliga,
-                null, null, null, null, null, null, null, null, null, null,
-                "Allianz Arena", "Felix Brych", false, null, null, false, false)
-        );
-
-        for (Match match : matches) {
-            indexDocument("football_matches", match.id(), match);
-        }
+        // Index the matches as raw JSON
+        indexRawDocument("football_matches", "1", String.format(matchData1, yesterday, yesterday, now, yesterday));
+        indexRawDocument("football_matches", "2", String.format(matchData2, twoDaysAgo, twoDaysAgo, now, twoDaysAgo));
+        indexRawDocument("football_matches", "3", String.format(matchData3, tomorrow, now));
     }
 
     private void createSamplePredictions() throws Exception {
@@ -210,5 +291,12 @@ public class DataInitializationService {
         request.setJsonEntity(json);
         restClient.performRequest(request);
         LOG.debug("Indexed document in " + index + " with id: " + id);
+    }
+
+    private void indexRawDocument(String index, String id, String jsonDocument) throws Exception {
+        Request request = new Request("PUT", "/" + index + "/_doc/" + id);
+        request.setJsonEntity(jsonDocument);
+        restClient.performRequest(request);
+        LOG.debug("Indexed raw document in " + index + " with id: " + id);
     }
 }
