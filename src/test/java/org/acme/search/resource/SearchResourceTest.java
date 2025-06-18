@@ -23,18 +23,44 @@ class SearchResourceTest {
 
     @BeforeAll
     void setupTestData() {
-        // Create sample football match (matching FootballMatchData DTO)
+        // Create sample football match (matching SimpleMatch DTO)
         String matchData = """
             {
-                "id": 1,
-                "homeTeam": "Barcelona",
-                "awayTeam": "Real Madrid",
-                "homeScore": 2,
-                "awayScore": 1,
-                "matchDate": "2024-01-15T20:00:00",
+                "id": "1",
+                "kickoffAt": 1705348800000,
+                "finishedAt": 1705354200000,
+                "updatedAt": 1705354200000,
+                "status": {
+                    "id": 1,
+                    "type": "finished",
+                    "name": "Finished",
+                    "code": "FT"
+                },
+                "homeTeam": {
+                    "id": "barcelona",
+                    "name": "Barcelona",
+                    "shortName": "Barca"
+                },
+                "awayTeam": {
+                    "id": "real-madrid",
+                    "name": "Real Madrid",
+                    "shortName": "Real"
+                },
+                "competition": {
+                    "id": "la-liga",
+                    "name": "La Liga"
+                },
+                "goalsFullTimeHome": 2,
+                "goalsFullTimeAway": 1,
+                "goalsHalfTimeHome": 1,
+                "goalsHalfTimeAway": 0,
                 "venue": "Camp Nou",
-                "competition": "La Liga",
-                "status": "FINISHED"
+                "referee": "Carlos del Cerro Grande",
+                "lineupsConfirmed": true,
+                "startedAt": 1705348800000,
+                "minute": "90+3",
+                "isDeleted": false,
+                "undecided": false
             }
             """;
 
