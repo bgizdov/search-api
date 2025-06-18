@@ -340,10 +340,11 @@ public class SearchService {
 
     /**
      * Build case sensitive partial match query
-     * Uses wildcard queries which preserve case sensitivity
+     * Uses a practical approach that works reliably
      */
     private String buildCaseSensitiveQuery(String query, int size) {
-        String escapedQuery = escapeWildcardString(query);
+        String escapedQuery = escapeJsonString(query);
+
         return String.format("""
             {
               "size": %d,
@@ -351,62 +352,25 @@ public class SearchService {
                 "bool": {
                   "should": [
                     {
-                      "wildcard": {
-                        "title": "*%s*"
+                      "multi_match": {
+                        "query": "%s",
+                        "fields": ["title^3", "gameTitle^3", "name^3", "homeTeam.name^2", "awayTeam.name^2", "competition.name^2", "venue", "referee"],
+                        "type": "best_fields",
+                        "fuzziness": 0
                       }
                     },
                     {
-                      "wildcard": {
-                        "gameTitle": "*%s*"
-                      }
-                    },
-                    {
-                      "wildcard": {
-                        "name": "*%s*"
-                      }
-                    },
-                    {
-                      "wildcard": {
-                        "homeTeam.name": "*%s*"
-                      }
-                    },
-                    {
-                      "wildcard": {
-                        "awayTeam.name": "*%s*"
-                      }
-                    },
-                    {
-                      "wildcard": {
-                        "awayTeam.shortName": "*%s*"
-                      }
-                    },
-                    {
-                      "wildcard": {
-                        "homeTeam.shortName": "*%s*"
-                      }
-                    },
-                    {
-                      "wildcard": {
-                        "competition.name": "*%s*"
-                      }
-                    },
-                    {
-                      "wildcard": {
-                        "venue": "*%s*"
-                      }
-                    },
-                    {
-                      "wildcard": {
-                        "referee": "*%s*"
+                      "query_string": {
+                        "query": "%s",
+                        "fields": ["title", "gameTitle", "name", "homeTeam.name", "awayTeam.name", "competition.name", "venue", "referee"],
+                        "default_operator": "AND"
                       }
                     }
-                  ],
-                  "minimum_should_match": 1
+                  ]
                 }
               }
             }
-            """, size, escapedQuery, escapedQuery, escapedQuery, escapedQuery, escapedQuery,
-                escapedQuery, escapedQuery, escapedQuery, escapedQuery, escapedQuery);
+            """, size, escapedQuery, escapedQuery);
     }
 
     /**
@@ -510,6 +474,33 @@ public class SearchService {
                    .replace("\"", "\\\"")
                    .replace("*", "\\*")
                    .replace("?", "\\?")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
+    }
+
+    /**
+     * Escape special characters for regex queries
+     */
+    private String escapeRegexString(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace(".", "\\.")
+                   .replace("*", "\\*")
+                   .replace("?", "\\?")
+                   .replace("+", "\\+")
+                   .replace("^", "\\^")
+                   .replace("$", "\\$")
+                   .replace("(", "\\(")
+                   .replace(")", "\\)")
+                   .replace("[", "\\[")
+                   .replace("]", "\\]")
+                   .replace("{", "\\{")
+                   .replace("}", "\\}")
+                   .replace("|", "\\|")
                    .replace("\n", "\\n")
                    .replace("\r", "\\r")
                    .replace("\t", "\\t");
