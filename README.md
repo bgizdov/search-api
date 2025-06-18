@@ -166,6 +166,7 @@ Configure sample data loading in `application.properties`:
 ```properties
 # Sample Data Configuration
 # Options: NONE, BASIC, PERFORMANCE_SMALL, PERFORMANCE_LARGE
+# Performance tests are disabled by default (use BASIC mode)
 app.sample-data.mode=BASIC
 app.sample-data.records-per-type=2500
 ```
@@ -173,19 +174,22 @@ app.sample-data.records-per-type=2500
 **Available modes:**
 
 - **`NONE`** - No sample data loaded
-- **`BASIC`** - Basic sample data (few records for development)
+- **`BASIC`** - Basic sample data (few records for development) **[DEFAULT]**
   - `football_matches` - 3 sample matches
   - `predictions` - 3 sample predictions
   - `quiz_games` - 2 sample quiz games
   - `player_games` - 2 sample player games
+  - ⚡ **Fast startup** - loads in seconds
 
-- **`PERFORMANCE_SMALL`** - Performance test data (configurable size)
+- **`PERFORMANCE_SMALL`** - Performance test data (configurable size) **[OPTIONAL]**
   - Uses `app.sample-data.records-per-type` setting (default: 2,500 per type = 10k total)
   - Good for testing search performance with moderate data
+  - ⏱️ **Moderate startup** - loads in ~30 seconds
 
-- **`PERFORMANCE_LARGE`** - Large performance test data
+- **`PERFORMANCE_LARGE`** - Large performance test data **[OPTIONAL]**
   - 250,000 records per type (1 million total records)
   - Suitable for stress testing and performance benchmarking
+  - 🐌 **Slow startup** - loads in several minutes
 
 ### Performance Data Features
 
@@ -197,31 +201,39 @@ When using `PERFORMANCE_SMALL` or `PERFORMANCE_LARGE` modes:
 - **Automatic indexing**: Refreshes Elasticsearch indices after loading
 - **Reference integrity**: Predictions and player games reference match IDs
 
-### Quick Start with Performance Data
+### Quick Start with Sample Data
 
-**Basic development (default):**
+**Basic development (default - fast startup):**
 ```bash
 ./mvnw quarkus:dev
-# Loads basic sample data (few records)
+# Loads basic sample data (few records) - PERFORMANCE TESTS DISABLED BY DEFAULT
+# ✅ Fast startup in seconds
 ```
 
-**Performance testing (10k records):**
+**Enable performance testing (10k records):**
 ```bash
-./mvnw quarkus:dev -Dquarkus.profile=dev-performance
+./mvnw quarkus:dev -Dapp.sample-data.mode=PERFORMANCE_SMALL
 # Loads 2,500 records per type (10k total)
+# ⏱️ Startup in ~30 seconds
 ```
 
-**Stress testing (1M records):**
+**Enable stress testing (1M records):**
 ```bash
 ./mvnw quarkus:dev -Dquarkus.profile=stress-test
 # Loads 250k records per type (1M total)
-# Note: This may take several minutes to load
+# 🐌 Startup in several minutes
 ```
 
-**Custom configuration:**
+**Custom performance configuration:**
 ```bash
 ./mvnw quarkus:dev -Dapp.sample-data.mode=PERFORMANCE_SMALL -Dapp.sample-data.records-per-type=5000
 # Loads 5k records per type (20k total)
+```
+
+**Disable all sample data:**
+```bash
+./mvnw quarkus:dev -Dapp.sample-data.mode=NONE
+# No sample data loaded - fastest startup
 ```
 
 ### Speed Up Development
