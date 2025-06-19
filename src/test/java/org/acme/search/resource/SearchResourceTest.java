@@ -6,6 +6,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import jakarta.inject.Inject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.acme.search.dto.football.*;
+import org.acme.search.dto.predictor.*;
+import org.acme.search.dto.classicquiz.*;
+import org.acme.search.dto.potm.*;
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.anyOf;
@@ -23,133 +30,111 @@ class SearchResourceTest {
 
     @BeforeAll
     void setupTestData() {
-        // Create sample football match (matching Match DTO)
-        String matchData = """
-            {
-                "id": "fb:m:123",
-                "kickoffAt": 1705348800000,
-                "finishedAt": 1705354200000,
-                "updatedAt": 1705354200000,
-                "status": {
-                    "id": 1,
-                    "type": "finished",
-                    "name": "Finished",
-                    "code": "FT"
-                },
-                "homeTeam": {
-                    "id": "fb:t:456",
-                    "name": "Barcelona",
-                    "shortName": "Barca"
-                },
-                "awayTeam": {
-                    "id": "fb:t:789",
-                    "name": "Real Madrid",
-                    "shortName": "Real"
-                },
-                "competition": {
-                    "id": "fb:c:101",
-                    "name": "La Liga"
-                },
-                "goalsFullTimeHome": 2,
-                "goalsFullTimeAway": 1,
-                "goalsHalfTimeHome": 1,
-                "goalsHalfTimeAway": 0,
-                "venue": "Camp Nou",
-                "referee": "Carlos del Cerro Grande",
-                "lineupsConfirmed": true,
-                "startedAt": 1705348800000,
-                "minute": "90+3",
-                "isDeleted": false,
-                "undecided": false
-            }
-            """;
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
 
-        // Create sample prediction (matching PredictionToMatch DTO)
-        String predictionData = """
-            {
-                "id": 1,
-                "matchId": 1,
-                "userId": "user123",
-                "predictedHomeScore": 2,
-                "predictedAwayScore": 1,
-                "predictedOutcome": "HOME_WIN",
-                "predictionTime": "2024-01-15T19:00:00",
-                "confidence": 85,
-                "isCorrect": true
-            }
-            """;
-
-        // Create sample quiz game (matching QuizGame DTO)
-        String quizGameData = """
-            {
-                "id": 1,
-                "title": "Football Quiz 2024",
-                "description": "Test your football knowledge",
-                "questions": ["Who won the 2022 World Cup?", "Which team has won the most Champions League titles?"],
-                "correctAnswers": ["Argentina", "Real Madrid"],
-                "category": "Sports",
-                "difficulty": 3,
-                "timeLimit": 300,
-                "createdAt": "2024-01-15T10:00:00",
-                "createdBy": "admin",
-                "isActive": true
-            }
-            """;
-
-        // Create sample player game (matching PlayerOfTheMatchGame DTO)
-        String playerGameData = """
-            {
-                "id": 1,
-                "matchId": 1,
-                "gameTitle": "El Clasico Player of the Match",
-                "playerOptions": ["Lionel Messi", "Karim Benzema", "Pedri", "Vinicius Jr."],
-                "correctPlayer": "Lionel Messi",
-                "userId": "user123",
-                "selectedPlayer": "Lionel Messi",
-                "points": 10,
-                "submissionTime": "2024-01-15T21:00:00",
-                "isCorrect": true,
-                "gameStatus": "COMPLETED"
-            }
-            """;
-
-        // Insert test data into Elasticsearch indices
-        // Note: We'll use a simple approach - just try to insert data
-        // The indices will be created automatically if they don't exist
         try {
+            // Create sample football match (matching SimpleMatch DTO)
+            String matchData = """
+                {
+                    "id": "fb:m:123",
+                    "kickoffAt": 1705348800000,
+                    "finishedAt": 1705354200000,
+                    "updatedAt": 1705354200000,
+                    "status": {
+                        "id": 1,
+                        "type": "finished",
+                        "name": "Finished",
+                        "code": "FT"
+                    },
+                    "homeTeam": {
+                        "id": "fb:t:456",
+                        "name": "Barcelona",
+                        "shortName": "Barca"
+                    },
+                    "awayTeam": {
+                        "id": "fb:t:789",
+                        "name": "Real Madrid",
+                        "shortName": "Real"
+                    },
+                    "competition": {
+                        "id": "fb:c:101",
+                        "name": "La Liga"
+                    },
+                    "goalsFullTimeHome": 2,
+                    "goalsFullTimeAway": 1,
+                    "goalsHalfTimeHome": 1,
+                    "goalsHalfTimeAway": 0,
+                    "venue": "Camp Nou",
+                    "referee": "Carlos del Cerro Grande",
+                    "lineupsConfirmed": true,
+                    "startedAt": 1705348800000,
+                    "minute": "90+3",
+                    "isDeleted": false,
+                    "undecided": false
+                }
+                """;
+
+            // Convert to SimpleMatch and then wrap it
+            SimpleMatch match = objectMapper.readValue(matchData, SimpleMatch.class);
+            SimpleMatchWrapper matchWrapper = SimpleMatchWrapper.of(match);
+
+            // Create sample prediction (matching GameInstance DTO)
+            GameInstance prediction = new GameInstance(1L, 1L, "user123", 2, 1, "HOME_WIN",
+                java.time.LocalDateTime.parse("2024-01-15T19:00:00"), 85, true,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+            GameInstanceWrapper predictionWrapper = GameInstanceWrapper.of(prediction);
+
+            // Create sample quiz game (matching ClassicQuizPublicDto DTO)
+            ClassicQuizPublicDto quiz = new ClassicQuizPublicDto(1L, "Football Quiz 2024", "Test your football knowledge",
+                List.of("Who won the 2022 World Cup?", "Which team has won the most Champions League titles?"),
+                List.of("Argentina", "Real Madrid"),
+                "Sports", 3, 300, java.time.LocalDateTime.parse("2024-01-15T10:00:00"), "admin", true,
+                null, null, 0, 0, null, null, null, 0, null, null, 0.0f, 0, null, null, false, null, null, 0, 0, null);
+            ClassicQuizWrapper quizWrapper = ClassicQuizWrapper.of(quiz);
+
+            // Create sample player game (matching PlayerOfTheMatch DTO)
+            PlayerOfTheMatch playerGame = new PlayerOfTheMatch(1L, 1L, "El Clasico Player of the Match",
+                List.of("Lionel Messi", "Karim Benzema", "Pedri", "Vinicius Jr."),
+                "Lionel Messi", "user123", "Lionel Messi", 10,
+                java.time.LocalDateTime.parse("2024-01-15T21:00:00"), true, "COMPLETED", "1",
+                java.util.Map.of("Lionel Messi", 150, "Karim Benzema", 75, "Pedri", 45, "Vinicius Jr.", 30));
+            PlayerOfTheMatchWrapper playerGameWrapper = PlayerOfTheMatchWrapper.of(playerGame);
+
+            // Insert test data into Elasticsearch indices
             System.out.println("Setting up test data using Elasticsearch host: " + elasticsearchHost);
 
-            // Insert match data
+            // Insert match wrapper data
             given()
                 .contentType("application/json")
-                .body(matchData)
+                .body(objectMapper.writeValueAsString(matchWrapper))
                 .when()
                 .put("http://" + elasticsearchHost + "/football_matches/_doc/fb:m:123")
                 .then()
                 .log().all();
 
-            // Insert prediction data
+            // Insert prediction wrapper data
             given()
                 .contentType("application/json")
-                .body(predictionData)
+                .body(objectMapper.writeValueAsString(predictionWrapper))
                 .when()
                 .put("http://" + elasticsearchHost + "/predictions/_doc/1")
                 .then()
                 .log().all();
 
-            // Insert quiz game data
+            // Insert quiz wrapper data
             given()
                 .contentType("application/json")
-                .body(quizGameData)
+                .body(objectMapper.writeValueAsString(quizWrapper))
                 .when()
                 .put("http://" + elasticsearchHost + "/quiz_games/_doc/1")
                 .then()
                 .log().all();
 
-            // Insert player game data
+            // Insert player game wrapper data
             given()
                 .contentType("application/json")
-                .body(playerGameData)
+                .body(objectMapper.writeValueAsString(playerGameWrapper))
                 .when()
                 .put("http://" + elasticsearchHost + "/player_games/_doc/1")
                 .then()
@@ -158,6 +143,7 @@ class SearchResourceTest {
             // Wait a bit for Elasticsearch to index the documents
             Thread.sleep(2000);
             System.out.println("Test data setup completed");
+
         } catch (Exception e) {
             System.out.println("Failed to setup test data: " + e.getMessage());
             // Continue with tests even if setup fails

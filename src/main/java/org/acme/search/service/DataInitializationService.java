@@ -9,8 +9,11 @@ import jakarta.inject.Inject;
 import org.acme.search.config.SampleDataConfig;
 import org.acme.search.dto.football.*;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
+import org.acme.search.dto.potm.PlayerOfTheMatchWrapper;
 import org.acme.search.dto.predictor.GameInstance;
+import org.acme.search.dto.predictor.GameInstanceWrapper;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
+import org.acme.search.dto.classicquiz.ClassicQuizWrapper;
 import org.acme.search.util.PerformanceDataGenerator;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
@@ -256,13 +259,25 @@ public class DataInitializationService {
         long twoDaysAgo = now - 2 * 24 * 60 * 60 * 1000;
         long tomorrow = now + 24 * 60 * 60 * 1000;
 
-        // Index the matches as raw JSON
-        indexRawDocument("football_matches", match1Id,
-            String.format(matchData1, match1Id, barcelonaId, realMadridId, laLigaId, yesterday, yesterday, now, yesterday));
-        indexRawDocument("football_matches", match2Id,
-            String.format(matchData2, match2Id, manUtdId, liverpoolId, premierLeagueId, twoDaysAgo, twoDaysAgo, now, twoDaysAgo));
-        indexRawDocument("football_matches", match3Id,
-            String.format(matchData3, match3Id, bayernId, dortmundId, bundesligaId, tomorrow, now));
+        // Create SimpleMatch objects and wrap them before indexing
+        SimpleMatch match1 = objectMapper.readValue(
+            String.format(matchData1, match1Id, barcelonaId, realMadridId, laLigaId, yesterday, yesterday, now, yesterday),
+            SimpleMatch.class);
+        SimpleMatch match2 = objectMapper.readValue(
+            String.format(matchData2, match2Id, manUtdId, liverpoolId, premierLeagueId, twoDaysAgo, twoDaysAgo, now, twoDaysAgo),
+            SimpleMatch.class);
+        SimpleMatch match3 = objectMapper.readValue(
+            String.format(matchData3, match3Id, bayernId, dortmundId, bundesligaId, tomorrow, now),
+            SimpleMatch.class);
+
+        // Create wrapper objects and index them
+        SimpleMatchWrapper wrapper1 = SimpleMatchWrapper.of(match1);
+        SimpleMatchWrapper wrapper2 = SimpleMatchWrapper.of(match2);
+        SimpleMatchWrapper wrapper3 = SimpleMatchWrapper.of(match3);
+
+        indexDocument("football_matches", match1Id, wrapper1);
+        indexDocument("football_matches", match2Id, wrapper2);
+        indexDocument("football_matches", match3Id, wrapper3);
     }
 
     private void createSamplePredictions() throws Exception {
@@ -281,7 +296,8 @@ public class DataInitializationService {
         );
 
         for (GameInstance prediction : predictions) {
-            indexDocument("predictions", prediction.id().toString(), prediction);
+            GameInstanceWrapper wrapper = GameInstanceWrapper.of(prediction);
+            indexDocument("predictions", prediction.id().toString(), wrapper);
         }
     }
 
@@ -298,7 +314,8 @@ public class DataInitializationService {
         );
 
         for (ClassicQuizPublicDto quiz : quizGames) {
-            indexDocument("quiz_games", quiz.id().toString(), quiz);
+            ClassicQuizWrapper wrapper = ClassicQuizWrapper.of(quiz);
+            indexDocument("quiz_games", quiz.id().toString(), wrapper);
         }
     }
 
@@ -321,7 +338,8 @@ public class DataInitializationService {
         );
 
         for (PlayerOfTheMatch game : playerGames) {
-            indexDocument("player_games", game.id().toString(), game);
+            PlayerOfTheMatchWrapper wrapper = PlayerOfTheMatchWrapper.of(game);
+            indexDocument("player_games", game.id().toString(), wrapper);
         }
     }
 

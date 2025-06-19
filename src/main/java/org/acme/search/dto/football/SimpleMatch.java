@@ -4,7 +4,6 @@ import java.util.Date;
 
 /**
  * DTO representing a football match for search purposes
- * Based on Match2 entity but simplified for search operations
  */
 public record SimpleMatch(
     String id,

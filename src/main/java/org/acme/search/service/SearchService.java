@@ -51,12 +51,13 @@ public class SearchService {
      * Search for football matches with specified search mode
      */
     public List<SimpleMatch> searchFootballMatches(String query, int size, SearchMode mode) throws IOException {
-        String searchQuery = buildSearchQuery(query, size, mode);
+        String searchQuery = buildWrapperSearchQuery(query, size, mode);
         Request request = new Request("POST", "/football_matches/_search");
         request.setJsonEntity(searchQuery);
 
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, SimpleMatch.class);
+        List<SimpleMatchWrapper> wrappers = parseSearchResponse(response, SimpleMatchWrapper.class);
+        return wrappers.stream().map(SimpleMatchWrapper::data).toList();
     }
 
     /**
@@ -77,12 +78,13 @@ public class SearchService {
      * Search for game instances (predictions) with specified search mode
      */
     public List<GameInstance> searchGameInstances(String query, int size, SearchMode mode) throws IOException {
-        String searchQuery = buildSearchQuery(query, size, mode);
+        String searchQuery = buildWrapperSearchQuery(query, size, mode);
         Request request = new Request("POST", "/predictions/_search");
         request.setJsonEntity(searchQuery);
 
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, GameInstance.class);
+        List<GameInstanceWrapper> wrappers = parseSearchResponse(response, GameInstanceWrapper.class);
+        return wrappers.stream().map(GameInstanceWrapper::data).toList();
     }
 
     /**
@@ -103,12 +105,13 @@ public class SearchService {
      * Search for classic quiz games with specified search mode
      */
     public List<ClassicQuizPublicDto> searchClassicQuizzes(String query, int size, SearchMode mode) throws IOException {
-        String searchQuery = buildSearchQuery(query, size, mode);
+        String searchQuery = buildWrapperSearchQuery(query, size, mode);
         Request request = new Request("POST", "/quiz_games/_search");
         request.setJsonEntity(searchQuery);
 
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, ClassicQuizPublicDto.class);
+        List<ClassicQuizWrapper> wrappers = parseSearchResponse(response, ClassicQuizWrapper.class);
+        return wrappers.stream().map(ClassicQuizWrapper::data).toList();
     }
 
     /**
@@ -129,12 +132,13 @@ public class SearchService {
      * Search for player of the match games with specified search mode
      */
     public List<PlayerOfTheMatch> searchPlayerOfTheMatchGames(String query, int size, SearchMode mode) throws IOException {
-        String searchQuery = buildSearchQuery(query, size, mode);
+        String searchQuery = buildWrapperSearchQuery(query, size, mode);
         Request request = new Request("POST", "/player_games/_search");
         request.setJsonEntity(searchQuery);
 
         Response response = restClient.performRequest(request);
-        return parseSearchResponse(response, PlayerOfTheMatch.class);
+        List<PlayerOfTheMatchWrapper> wrappers = parseSearchResponse(response, PlayerOfTheMatchWrapper.class);
+        return wrappers.stream().map(PlayerOfTheMatchWrapper::data).toList();
     }
 
     /**
@@ -151,7 +155,8 @@ public class SearchService {
         Request request = new Request("GET", "/football_matches/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, SimpleMatch.class);
+            Optional<SimpleMatchWrapper> wrapper = parseGetResponse(response, SimpleMatchWrapper.class);
+            return wrapper.map(SimpleMatchWrapper::data);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -172,7 +177,8 @@ public class SearchService {
         Request request = new Request("GET", "/predictions/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, GameInstance.class);
+            Optional<GameInstanceWrapper> wrapper = parseGetResponse(response, GameInstanceWrapper.class);
+            return wrapper.map(GameInstanceWrapper::data);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -193,7 +199,8 @@ public class SearchService {
         Request request = new Request("GET", "/quiz_games/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, ClassicQuizPublicDto.class);
+            Optional<ClassicQuizWrapper> wrapper = parseGetResponse(response, ClassicQuizWrapper.class);
+            return wrapper.map(ClassicQuizWrapper::data);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -214,7 +221,8 @@ public class SearchService {
         Request request = new Request("GET", "/player_games/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            return parseGetResponse(response, PlayerOfTheMatch.class);
+            Optional<PlayerOfTheMatchWrapper> wrapper = parseGetResponse(response, PlayerOfTheMatchWrapper.class);
+            return wrapper.map(PlayerOfTheMatchWrapper::data);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -404,6 +412,28 @@ public class SearchService {
     }
 
     /**
+     * Build Elasticsearch search query for wrapper objects (searches only wrapper fields)
+     */
+    private String buildWrapperSearchQuery(String query, int size, SearchMode mode) {
+        if (query == null || query.trim().isEmpty()) {
+            return String.format("""
+                {
+                  "size": %d,
+                  "query": {
+                    "match_all": {}
+                  }
+                }
+                """, size);
+        }
+
+        return switch (mode) {
+            case CASE_INSENSITIVE -> buildWrapperCaseInsensitiveQuery(query, size);
+            case CASE_SENSITIVE -> buildWrapperCaseSensitiveQuery(query, size);
+            case FULL_MATCH -> buildWrapperFullMatchQuery(query, size);
+        };
+    }
+
+    /**
      * Build case insensitive partial match query (default behavior)
      */
     private String buildCaseInsensitiveQuery(String query, int size) {
@@ -588,6 +618,159 @@ public class SearchService {
                    .replace("\n", "\\n")
                    .replace("\r", "\\r")
                    .replace("\t", "\\t");
+    }
+
+    /**
+     * Build wrapper-specific case insensitive query (searches only wrapper fields)
+     */
+    private String buildWrapperCaseInsensitiveQuery(String query, int size) {
+        return String.format("""
+            {
+              "size": %d,
+              "query": {
+                "bool": {
+                  "should": [
+                    {
+                      "match": {
+                        "id": {
+                          "query": "%s",
+                          "fuzziness": "AUTO"
+                        }
+                      }
+                    },
+                    {
+                      "match": {
+                        "searchTitle": {
+                          "query": "%s",
+                          "fuzziness": "AUTO"
+                        }
+                      }
+                    },
+                    {
+                      "match": {
+                        "searchDescription": {
+                          "query": "%s",
+                          "fuzziness": "AUTO"
+                        }
+                      }
+                    },
+                    {
+                      "terms": {
+                        "tags": ["%s"]
+                      }
+                    },
+                    {
+                      "terms": {
+                        "flags": ["%s"]
+                      }
+                    },
+                    {
+                      "terms": {
+                        "entityIds": ["%s"]
+                      }
+                    }
+                  ],
+                  "minimum_should_match": 1
+                }
+              }
+            }
+            """, size, query, query, query, query, query, query);
+    }
+
+    /**
+     * Build wrapper-specific case sensitive query (searches only wrapper fields)
+     */
+    private String buildWrapperCaseSensitiveQuery(String query, int size) {
+        return String.format("""
+            {
+              "size": %d,
+              "query": {
+                "bool": {
+                  "should": [
+                    {
+                      "term": {
+                        "id.keyword": "%s"
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "searchTitle": "%s"
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "searchDescription": "%s"
+                      }
+                    },
+                    {
+                      "term": {
+                        "tags.keyword": "%s"
+                      }
+                    },
+                    {
+                      "term": {
+                        "flags.keyword": "%s"
+                      }
+                    },
+                    {
+                      "term": {
+                        "entityIds.keyword": "%s"
+                      }
+                    }
+                  ],
+                  "minimum_should_match": 1
+                }
+              }
+            }
+            """, size, query, query, query, query, query, query);
+    }
+
+    /**
+     * Build wrapper-specific full match query (searches only wrapper fields)
+     */
+    private String buildWrapperFullMatchQuery(String query, int size) {
+        return String.format("""
+            {
+              "size": %d,
+              "query": {
+                "bool": {
+                  "should": [
+                    {
+                      "term": {
+                        "id.keyword": "%s"
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "searchTitle": "%s"
+                      }
+                    },
+                    {
+                      "match_phrase": {
+                        "searchDescription": "%s"
+                      }
+                    },
+                    {
+                      "term": {
+                        "tags.keyword": "%s"
+                      }
+                    },
+                    {
+                      "term": {
+                        "flags.keyword": "%s"
+                      }
+                    },
+                    {
+                      "term": {
+                        "entityIds.keyword": "%s"
+                      }
+                    }
+                  ],
+                  "minimum_should_match": 1
+                }
+              }
+            }
+            """, size, query, query, query, query, query, query);
     }
 
     /**
