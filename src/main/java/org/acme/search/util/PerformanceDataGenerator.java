@@ -1,5 +1,6 @@
 package org.acme.search.util;
 
+import java.util.HashMap;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
 import org.jboss.logging.Logger;
@@ -101,7 +102,7 @@ public class PerformanceDataGenerator {
             MatchStatus status = new MatchStatus((byte)(isFinished ? 1 : 2), isFinished ? "finished" : "scheduled",
                 isFinished ? "Finished" : "Scheduled", isFinished ? "FT" : "NS");
 
-            SimpleMatch match = new SimpleMatch(
+            Match match = new Match(
                 "fb:m:" + id,
                 new java.util.Date(kickoffTime),
                 isFinished ? new java.util.Date(kickoffTime + 90 * 60 * 1000) : null,
@@ -116,7 +117,7 @@ public class PerformanceDataGenerator {
             );
 
             // Create wrapper and serialize
-            SimpleMatchWrapper wrapper = SimpleMatchWrapper.of(match);
+            MatchWrapper wrapper = MatchWrapper.of(match);
             String wrapperJson = objectMapper.writeValueAsString(wrapper);
 
             // Create index action
@@ -233,9 +234,7 @@ public class PerformanceDataGenerator {
             PlayerOfTheMatch playerGame = new PlayerOfTheMatch(id, matchId, "Player of the Match Game " + (i + 1),
                 List.of(players[i % players.length], players[(i + 1) % players.length],
                        players[(i + 2) % players.length], players[(i + 3) % players.length]),
-                correctPlayer, userId, selectedPlayer, i % 20,
-                LocalDateTime.parse("2024-01-15T21:00:00"), correctPlayer.equals(selectedPlayer), status, String.valueOf(matchId),
-                Map.of(correctPlayer, 150, selectedPlayer, 100));
+                  i % 20,  "ACTIVE", new HashMap<>());
 
             // Create wrapper and serialize
             PlayerOfTheMatchWrapper wrapper = PlayerOfTheMatchWrapper.of(playerGame);

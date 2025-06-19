@@ -12,14 +12,8 @@ public record PlayerOfTheMatch(
     Long matchId,
     String gameTitle,
     List<String> playerOptions,
-    String correctPlayer,
-    String userId,
-    String selectedPlayer,
     Integer points,
-    LocalDateTime submissionTime,
-    Boolean isCorrect,
     String gameStatus, // "ACTIVE", "COMPLETED", "EXPIRED"
-    String matchIdStr,
     Map<String, Integer> votes
 ) {
 }

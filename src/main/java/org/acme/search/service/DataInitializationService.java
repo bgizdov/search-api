@@ -20,7 +20,6 @@ import org.elasticsearch.client.RestClient;
 import org.jboss.logging.Logger;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -265,21 +264,21 @@ public class DataInitializationService {
         long tomorrow = now + 24 * 60 * 60 * 1000;
 
         // Create SimpleMatch objects and wrap them before indexing
-        SimpleMatch match1 = objectMapper.readValue(
+        Match match1 = objectMapper.readValue(
             String.format(matchData1, match1Id, barcelonaId, realMadridId, laLigaId, yesterday, yesterday, now, yesterday),
-            SimpleMatch.class);
-        SimpleMatch match2 = objectMapper.readValue(
+            Match.class);
+        Match match2 = objectMapper.readValue(
             String.format(matchData2, match2Id, manUtdId, liverpoolId, premierLeagueId, twoDaysAgo, twoDaysAgo, now, twoDaysAgo),
-            SimpleMatch.class);
-        SimpleMatch match3 = objectMapper.readValue(
+            Match.class);
+        Match match3 = objectMapper.readValue(
             String.format(matchData3, match3Id, bayernId, dortmundId, bundesligaId, tomorrow, now),
-            SimpleMatch.class);
+            Match.class);
 
         // Create wrapper objects and index them
         LOG.info("Creating SimpleMatchWrapper objects...");
-        SimpleMatchWrapper wrapper1 = SimpleMatchWrapper.of(match1);
-        SimpleMatchWrapper wrapper2 = SimpleMatchWrapper.of(match2);
-        SimpleMatchWrapper wrapper3 = SimpleMatchWrapper.of(match3);
+        MatchWrapper wrapper1 = MatchWrapper.of(match1);
+        MatchWrapper wrapper2 = MatchWrapper.of(match2);
+        MatchWrapper wrapper3 = MatchWrapper.of(match3);
         LOG.info("✓ Created 3 SimpleMatchWrapper objects");
 
         LOG.info("Indexing football matches as wrapper objects...");
@@ -336,14 +335,12 @@ public class DataInitializationService {
         List<PlayerOfTheMatch> playerGames = List.of(
             new PlayerOfTheMatch(generatePlayerGameId(), matchId1, "El Clasico Player of the Match",
                 List.of("Lionel Messi", "Karim Benzema", "Pedri", "Vinicius Jr."),
-                "Lionel Messi", "user1", "Lionel Messi", 10,
-                LocalDateTime.now().minusHours(1), true, "COMPLETED", matchId1.toString(),
+                11, "COMPLETED",
                 Map.of("Lionel Messi", 150, "Karim Benzema", 75, "Pedri", 45, "Vinicius Jr.", 30)),
             new PlayerOfTheMatch(generatePlayerGameId(), matchId2, "Premier League POTM",
                 List.of("Mohamed Salah", "Bruno Fernandes", "Virgil van Dijk", "Marcus Rashford"),
-                "Mohamed Salah", "user2", "Bruno Fernandes", 0,
-                LocalDateTime.now().minusHours(2), false, "COMPLETED", matchId2.toString(),
-                Map.of("Mohamed Salah", 200, "Bruno Fernandes", 120, "Virgil van Dijk", 80, "Marcus Rashford", 60))
+                10, "COMPLETED",
+                Map.of("Mohamed Salah", 120, "Bruno Fernandes", 80, "Virgil van Dijk", 70, "Marcus Rashford", 60))
         );
 
         for (PlayerOfTheMatch game : playerGames) {

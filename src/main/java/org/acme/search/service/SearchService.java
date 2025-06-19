@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.acme.search.dto.football.SimpleMatch;
-import org.acme.search.dto.football.SimpleMatchWrapper;
+import org.acme.search.dto.football.Match;
+import org.acme.search.dto.football.MatchWrapper;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
 import org.acme.search.dto.potm.PlayerOfTheMatchWrapper;
 import org.acme.search.dto.predictor.GameInstance;
@@ -43,27 +43,27 @@ public class SearchService {
     /**
      * Search for football matches with default search mode
      */
-    public List<SimpleMatch> searchFootballMatches(String query, int size) throws IOException {
+    public List<Match> searchFootballMatches(String query, int size) throws IOException {
         return searchFootballMatches(query, size, SearchMode.DEFAULT);
     }
 
     /**
      * Search for football matches with specified search mode
      */
-    public List<SimpleMatch> searchFootballMatches(String query, int size, SearchMode mode) throws IOException {
+    public List<Match> searchFootballMatches(String query, int size, SearchMode mode) throws IOException {
         String searchQuery = buildWrapperSearchQuery(query, size, mode);
         Request request = new Request("POST", "/football_matches/_search");
         request.setJsonEntity(searchQuery);
 
         Response response = restClient.performRequest(request);
-        List<SimpleMatchWrapper> wrappers = parseSearchResponse(response, SimpleMatchWrapper.class);
-        return wrappers.stream().map(SimpleMatchWrapper::data).toList();
+        List<MatchWrapper> wrappers = parseSearchResponse(response, MatchWrapper.class);
+        return wrappers.stream().map(MatchWrapper::data).toList();
     }
 
     /**
      * Search for football matches (legacy method name for backward compatibility)
      */
-    public List<SimpleMatch> searchMatches(String query, int size) throws IOException {
+    public List<Match> searchMatches(String query, int size) throws IOException {
         return searchFootballMatches(query, size);
     }
 
@@ -151,12 +151,12 @@ public class SearchService {
     /**
      * Find a football match by ID
      */
-    public Optional<SimpleMatch> findFootballMatchById(Long id) throws IOException {
+    public Optional<Match> findFootballMatchById(Long id) throws IOException {
         Request request = new Request("GET", "/football_matches/_doc/" + id);
         try {
             Response response = restClient.performRequest(request);
-            Optional<SimpleMatchWrapper> wrapper = parseGetResponse(response, SimpleMatchWrapper.class);
-            return wrapper.map(SimpleMatchWrapper::data);
+            Optional<MatchWrapper> wrapper = parseGetResponse(response, MatchWrapper.class);
+            return wrapper.map(MatchWrapper::data);
         } catch (Exception e) {
             // Document not found or other error
             return Optional.empty();
@@ -166,7 +166,7 @@ public class SearchService {
     /**
      * Find a match by ID (legacy method name for backward compatibility)
      */
-    public Optional<SimpleMatch> findMatchById(Long id) throws IOException {
+    public Optional<Match> findMatchById(Long id) throws IOException {
         return findFootballMatchById(id);
     }
 
@@ -241,9 +241,9 @@ public class SearchService {
     /**
      * Search for football matches and return wrapped results
      */
-    public List<SimpleMatchWrapper> searchFootballMatchesWrapped(String query, int size, SearchMode mode) throws IOException {
-        List<SimpleMatch> matches = searchFootballMatches(query, size, mode);
-        return matches.stream().map(SimpleMatchWrapper::of).toList();
+    public List<MatchWrapper> searchFootballMatchesWrapped(String query, int size, SearchMode mode) throws IOException {
+        List<Match> matches = searchFootballMatches(query, size, mode);
+        return matches.stream().map(MatchWrapper::of).toList();
     }
 
     /**
@@ -273,9 +273,9 @@ public class SearchService {
     /**
      * Find a football match by ID and return wrapped result
      */
-    public Optional<SimpleMatchWrapper> findFootballMatchByIdWrapped(Long id) throws IOException {
-        Optional<SimpleMatch> match = findFootballMatchById(id);
-        return match.map(SimpleMatchWrapper::of);
+    public Optional<MatchWrapper> findFootballMatchByIdWrapped(Long id) throws IOException {
+        Optional<Match> match = findFootballMatchById(id);
+        return match.map(MatchWrapper::of);
     }
 
     /**
@@ -317,7 +317,7 @@ public class SearchService {
         int sizePerType = Math.max(1, size / 4); // Divide size among 4 types
 
         // Use the wrapper search methods directly
-        List<SimpleMatchWrapper> wrappedMatches = searchFootballMatchesWrapped(query, sizePerType, mode);
+        List<MatchWrapper> wrappedMatches = searchFootballMatchesWrapped(query, sizePerType, mode);
         List<GameInstanceWrapper> wrappedGameInstances = searchGameInstancesWrapped(query, sizePerType, mode);
         List<ClassicQuizWrapper> wrappedQuizzes = searchClassicQuizzesWrapped(query, sizePerType, mode);
         List<PlayerOfTheMatchWrapper> wrappedPlayerGames = searchPlayerOfTheMatchGamesWrapped(query, sizePerType, mode);

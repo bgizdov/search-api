@@ -76,8 +76,8 @@ class SearchResourceTest {
                 """;
 
             // Convert to SimpleMatch and then wrap it
-            SimpleMatch match = objectMapper.readValue(matchData, SimpleMatch.class);
-            SimpleMatchWrapper matchWrapper = SimpleMatchWrapper.of(match);
+            Match match = objectMapper.readValue(matchData, Match.class);
+            MatchWrapper matchWrapper = MatchWrapper.of(match);
 
             // Create sample prediction (matching GameInstance DTO)
             GameInstance prediction = new GameInstance(1L, 1L, "user123", 2, 1, "HOME_WIN",
@@ -96,8 +96,7 @@ class SearchResourceTest {
             // Create sample player game (matching PlayerOfTheMatch DTO)
             PlayerOfTheMatch playerGame = new PlayerOfTheMatch(1L, 1L, "El Clasico Player of the Match",
                 List.of("Lionel Messi", "Karim Benzema", "Pedri", "Vinicius Jr."),
-                "Lionel Messi", "user123", "Lionel Messi", 10,
-                java.time.LocalDateTime.parse("2024-01-15T21:00:00"), true, "COMPLETED", "1",
+                10, "COMPLETED",
                 java.util.Map.of("Lionel Messi", 150, "Karim Benzema", 75, "Pedri", 45, "Vinicius Jr.", 30));
             PlayerOfTheMatchWrapper playerGameWrapper = PlayerOfTheMatchWrapper.of(playerGame);
 

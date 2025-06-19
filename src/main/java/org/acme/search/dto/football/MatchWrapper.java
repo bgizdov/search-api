@@ -5,22 +5,22 @@ import java.util.List;
 /**
  * Wrapper DTO for SimpleMatch with additional search metadata
  */
-public record SimpleMatchWrapper(
+public record MatchWrapper(
     String id,
     String searchTitle,
     String searchDescription,
     List<String> tags,
     List<String> flags,
     List<String> entityIds,
-    SimpleMatch data
+    Match data
 ) {
 
     /**
      * Create a wrapper with search metadata for a SimpleMatch
      */
-    public static SimpleMatchWrapper of(SimpleMatch match, String searchTitle, String searchDescription, 
+    public static MatchWrapper of(Match match, String searchTitle, String searchDescription,
                                        List<String> tags, List<String> flags, List<String> entityIds) {
-        return new SimpleMatchWrapper(
+        return new MatchWrapper(
             match.id(),
             searchTitle,
             searchDescription,
@@ -34,7 +34,7 @@ public record SimpleMatchWrapper(
     /**
      * Create a simple wrapper with minimal metadata
      */
-    public static SimpleMatchWrapper of(SimpleMatch match) {
+    public static MatchWrapper of(Match match) {
         String title = String.format("%s vs %s",
             match.homeTeam() != null ? match.homeTeam().name() : "Unknown",
             match.awayTeam() != null ? match.awayTeam().name() : "Unknown");
@@ -50,7 +50,7 @@ public record SimpleMatchWrapper(
             match.competition() != null ? match.competition().id() : null
         ).stream().filter(id -> id != null).toList();
 
-        return new SimpleMatchWrapper(
+        return new MatchWrapper(
             match.id(),
             title,
             description,

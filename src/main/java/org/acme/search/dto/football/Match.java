@@ -5,7 +5,7 @@ import java.util.Date;
 /**
  * DTO representing a football match for search purposes
  */
-public record SimpleMatch(
+public record Match(
     String id,
     Date kickoffAt,
     Date finishedAt,
