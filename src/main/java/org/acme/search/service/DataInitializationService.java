@@ -82,6 +82,10 @@ public class DataInitializationService {
     }
 
     private void initializeSampleData(SampleDataConfig.Mode mode) throws Exception {
+        // Clean up existing indices to ensure fresh start with wrapper structure
+        LOG.info("Cleaning up existing indices...");
+        cleanupIndices();
+
         switch (mode) {
             case BASIC -> {
                 LOG.info("Loading basic sample data...");
@@ -381,5 +385,31 @@ public class DataInitializationService {
 
     private Long generatePlayerGameId() {
         return playerGameIdGenerator.getAndIncrement();
+    }
+
+    /**
+     * Clean up existing indices to ensure fresh start with wrapper structure
+     */
+    private void cleanupIndices() {
+        String[] indices = {"football_matches", "predictions", "quiz_games", "player_games"};
+
+        for (String index : indices) {
+            try {
+                // Try to delete the index
+                Request deleteRequest = new Request("DELETE", "/" + index);
+                restClient.performRequest(deleteRequest);
+                LOG.info("Deleted index: " + index);
+            } catch (Exception e) {
+                // Index might not exist, which is fine
+                LOG.debug("Could not delete index " + index + ": " + e.getMessage());
+            }
+        }
+
+        // Wait a bit for deletions to complete
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

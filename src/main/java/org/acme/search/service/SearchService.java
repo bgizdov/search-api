@@ -316,24 +316,11 @@ public class SearchService {
         // Search each type with a smaller size to distribute results
         int sizePerType = Math.max(1, size / 4); // Divide size among 4 types
 
-        List<SimpleMatch> footballMatches = searchFootballMatches(query, sizePerType, mode);
-        List<GameInstance> gameInstances = searchGameInstances(query, sizePerType, mode);
-        List<ClassicQuizPublicDto> classicQuizzes = searchClassicQuizzes(query, sizePerType, mode);
-        List<PlayerOfTheMatch> playerOfTheMatchGames = searchPlayerOfTheMatchGames(query, sizePerType, mode);
-
-        // Convert to wrapper types
-        List<SimpleMatchWrapper> wrappedMatches = footballMatches.stream()
-            .map(SimpleMatchWrapper::of)
-            .toList();
-        List<GameInstanceWrapper> wrappedGameInstances = gameInstances.stream()
-            .map(GameInstanceWrapper::of)
-            .toList();
-        List<ClassicQuizWrapper> wrappedQuizzes = classicQuizzes.stream()
-            .map(ClassicQuizWrapper::of)
-            .toList();
-        List<PlayerOfTheMatchWrapper> wrappedPlayerGames = playerOfTheMatchGames.stream()
-            .map(PlayerOfTheMatchWrapper::of)
-            .toList();
+        // Use the wrapper search methods directly
+        List<SimpleMatchWrapper> wrappedMatches = searchFootballMatchesWrapped(query, sizePerType, mode);
+        List<GameInstanceWrapper> wrappedGameInstances = searchGameInstancesWrapped(query, sizePerType, mode);
+        List<ClassicQuizWrapper> wrappedQuizzes = searchClassicQuizzesWrapped(query, sizePerType, mode);
+        List<PlayerOfTheMatchWrapper> wrappedPlayerGames = searchPlayerOfTheMatchGamesWrapped(query, sizePerType, mode);
 
         return UnifiedSearchResponse.of(wrappedMatches, wrappedGameInstances, wrappedQuizzes, wrappedPlayerGames);
     }
