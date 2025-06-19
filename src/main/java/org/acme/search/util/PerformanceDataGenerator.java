@@ -3,18 +3,30 @@ package org.acme.search.util;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RestClient;
 import org.jboss.logging.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.acme.search.dto.football.*;
+import org.acme.search.dto.predictor.*;
+import org.acme.search.dto.classicquiz.*;
+import org.acme.search.dto.potm.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Utility class for generating performance test data
  */
 public class PerformanceDataGenerator {
-    
+
     private static final Logger LOG = Logger.getLogger(PerformanceDataGenerator.class);
-    
+
     private final RestClient restClient;
-    
+    private final ObjectMapper objectMapper;
+
     public PerformanceDataGenerator(RestClient restClient) {
         this.restClient = restClient;
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
     }
     
     /**
@@ -80,37 +92,36 @@ public class PerformanceDataGenerator {
             boolean isFinished = i % 4 != 3; // 75% finished, 25% scheduled
             long kickoffTime = System.currentTimeMillis() - (i % 7) * 24 * 60 * 60 * 1000L; // Spread over last week
 
-            // Create index action
-            bulkBody.append(String.format("{\"index\":{\"_index\":\"football_matches\",\"_id\":\"%s\"}}\n", id));
+            // Create SimpleMatch DTO object
+            Team homeTeam = new Team("fb:t:" + (i % teamNames.length), null, homeTeamName, null,
+                homeTeamName.split(" ")[0], false, null, null, null, null);
+            Team awayTeam = new Team("fb:t:" + ((i + 1) % teamNames.length), null, awayTeamName, null,
+                awayTeamName.split(" ")[0], false, null, null, null, null);
+            Competition competition = new Competition("fb:c:" + (i % competitionNames.length), null, null, null, competitionName);
+            MatchStatus status = new MatchStatus((byte)(isFinished ? 1 : 2), isFinished ? "finished" : "scheduled",
+                isFinished ? "Finished" : "Scheduled", isFinished ? "FT" : "NS");
 
-            // Create simplified document structure for performance
-            String matchData = String.format(
-                "{\"id\":\"%s\",\"kickoffAt\":%d,\"finishedAt\":%s,\"updatedAt\":%d," +
-                "\"status\":{\"id\":%d,\"type\":\"%s\",\"name\":\"%s\",\"code\":\"%s\"}," +
-                "\"homeTeam\":{\"id\":\"team-%d\",\"name\":\"%s\",\"shortName\":\"%s\"}," +
-                "\"awayTeam\":{\"id\":\"team-%d\",\"name\":\"%s\",\"shortName\":\"%s\"}," +
-                "\"competition\":{\"id\":\"comp-%d\",\"name\":\"%s\"}," +
-                "\"goalsFullTimeHome\":%s,\"goalsFullTimeAway\":%s," +
-                "\"goalsHalfTimeHome\":%s,\"goalsHalfTimeAway\":%s," +
-                "\"venue\":\"%s\",\"referee\":\"%s\",\"lineupsConfirmed\":%s," +
-                "\"startedAt\":%s,\"minute\":\"%s\",\"isDeleted\":false,\"undecided\":false}\n",
-                id, kickoffTime,
-                isFinished ? String.valueOf(kickoffTime + 90 * 60 * 1000) : "null",
-                System.currentTimeMillis(),
-                isFinished ? 1 : 2, isFinished ? "finished" : "scheduled",
-                isFinished ? "Finished" : "Scheduled", isFinished ? "FT" : "NS",
-                i % teamNames.length, homeTeamName, homeTeamName.split(" ")[0],
-                (i + 1) % teamNames.length, awayTeamName, awayTeamName.split(" ")[0],
-                i % competitionNames.length, competitionName,
-                isFinished ? String.valueOf(i % 5) : "null",
-                isFinished ? String.valueOf((i + 1) % 5) : "null",
-                isFinished ? String.valueOf(i % 3) : "null",
-                isFinished ? String.valueOf((i + 1) % 3) : "null",
-                venue, referee, isFinished ? "true" : "false",
-                isFinished ? String.valueOf(kickoffTime) : "null",
-                isFinished ? "90" : "null"
+            SimpleMatch match = new SimpleMatch(
+                "fb:m:" + id,
+                new java.util.Date(kickoffTime),
+                isFinished ? new java.util.Date(kickoffTime + 90 * 60 * 1000) : null,
+                new java.util.Date(System.currentTimeMillis()),
+                status, homeTeam, awayTeam, competition,
+                isFinished ? (byte)(i % 5) : null, isFinished ? (byte)((i + 1) % 5) : null,
+                isFinished ? (byte)(i % 3) : null, isFinished ? (byte)((i + 1) % 3) : null,
+                null, null, null, null, null, null,
+                venue, referee, isFinished,
+                isFinished ? new java.util.Date(kickoffTime) : null,
+                isFinished ? "90" : null, false, false
             );
-            bulkBody.append(matchData);
+
+            // Create wrapper and serialize
+            SimpleMatchWrapper wrapper = SimpleMatchWrapper.of(match);
+            String wrapperJson = objectMapper.writeValueAsString(wrapper);
+
+            // Create index action
+            bulkBody.append(String.format("{\"index\":{\"_index\":\"football_matches\",\"_id\":\"%s\"}}\n", "fb:m:" + id));
+            bulkBody.append(wrapperJson).append("\n");
 
             // Send batch when we reach batch size or at the end
             if ((i + 1) % batchSize == 0 || i == count - 1) {
@@ -137,11 +148,17 @@ public class PerformanceDataGenerator {
             String userId = userIds[i % userIds.length];
             String outcome = outcomes[i % outcomes.length];
 
-            bulkBody.append(String.format("{\"index\":{\"_index\":\"predictions\",\"_id\":\"%d\"}}\n", id));
+            // Create GameInstance DTO object
+            GameInstance prediction = new GameInstance(id, matchId, userId, i % 4, (i + 1) % 4, outcome,
+                LocalDateTime.parse("2024-01-15T19:00:00"), 50 + (i % 50), (i % 2 == 0),
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
-            String predictionData = String.format("{\"id\":%d,\"matchId\":%d,\"userId\":\"%s\",\"predictedHomeScore\":%d,\"predictedAwayScore\":%d,\"predictedOutcome\":\"%s\",\"predictionTime\":\"2024-01-15T19:00:00\",\"confidence\":%d,\"isCorrect\":%s}\n",
-                id, matchId, userId, i % 4, (i + 1) % 4, outcome, 50 + (i % 50), (i % 2 == 0));
-            bulkBody.append(predictionData);
+            // Create wrapper and serialize
+            GameInstanceWrapper wrapper = GameInstanceWrapper.of(prediction);
+            String wrapperJson = objectMapper.writeValueAsString(wrapper);
+
+            bulkBody.append(String.format("{\"index\":{\"_index\":\"predictions\",\"_id\":\"%d\"}}\n", id));
+            bulkBody.append(wrapperJson).append("\n");
 
             if ((i + 1) % batchSize == 0 || i == count - 1) {
                 sendBulkRequest(bulkBody.toString());
@@ -170,11 +187,18 @@ public class PerformanceDataGenerator {
             String category = categories[i % categories.length];
             String creator = creators[i % creators.length];
 
-            bulkBody.append(String.format("{\"index\":{\"_index\":\"quiz_games\",\"_id\":\"%d\"}}\n", id));
+            // Create ClassicQuizPublicDto object
+            ClassicQuizPublicDto quiz = new ClassicQuizPublicDto(id, title, "Test your football knowledge with this quiz",
+                List.of("Question 1?", "Question 2?"), List.of("Answer 1", "Answer 2"),
+                category, 1 + (i % 5), 300 + (i % 300), LocalDateTime.parse("2024-01-15T10:00:00"), creator, true,
+                null, null, 0, 0, null, null, null, 0, null, null, 0.0f, 0, null, null, false, null, null, 0, 0, null);
 
-            String quizData = String.format("{\"id\":%d,\"title\":\"%s\",\"description\":\"Test your football knowledge with this quiz\",\"questions\":[\"Question 1?\",\"Question 2?\"],\"correctAnswers\":[\"Answer 1\",\"Answer 2\"],\"category\":\"%s\",\"difficulty\":%d,\"timeLimit\":%d,\"createdAt\":\"2024-01-15T10:00:00\",\"createdBy\":\"%s\",\"isActive\":true}\n",
-                id, title, category, 1 + (i % 5), 300 + (i % 300), creator);
-            bulkBody.append(quizData);
+            // Create wrapper and serialize
+            ClassicQuizWrapper wrapper = ClassicQuizWrapper.of(quiz);
+            String wrapperJson = objectMapper.writeValueAsString(wrapper);
+
+            bulkBody.append(String.format("{\"index\":{\"_index\":\"quiz_games\",\"_id\":\"%d\"}}\n", id));
+            bulkBody.append(wrapperJson).append("\n");
 
             if ((i + 1) % batchSize == 0 || i == count - 1) {
                 sendBulkRequest(bulkBody.toString());
@@ -205,15 +229,20 @@ public class PerformanceDataGenerator {
             String userId = userIds[i % userIds.length];
             String status = statuses[i % statuses.length];
 
-            bulkBody.append(String.format("{\"index\":{\"_index\":\"player_games\",\"_id\":\"%d\"}}\n", id));
-
-            String playerData = String.format("{\"id\":%d,\"matchId\":%d,\"gameTitle\":\"Player of the Match Game %d\",\"playerOptions\":[\"%s\",\"%s\",\"%s\",\"%s\"],\"correctPlayer\":\"%s\",\"userId\":\"%s\",\"selectedPlayer\":\"%s\",\"points\":%d,\"submissionTime\":\"2024-01-15T21:00:00\",\"isCorrect\":%s,\"gameStatus\":\"%s\"}\n",
-                id, matchId, i + 1,
-                players[i % players.length], players[(i + 1) % players.length],
-                players[(i + 2) % players.length], players[(i + 3) % players.length],
+            // Create PlayerOfTheMatch object
+            PlayerOfTheMatch playerGame = new PlayerOfTheMatch(id, matchId, "Player of the Match Game " + (i + 1),
+                List.of(players[i % players.length], players[(i + 1) % players.length],
+                       players[(i + 2) % players.length], players[(i + 3) % players.length]),
                 correctPlayer, userId, selectedPlayer, i % 20,
-                correctPlayer.equals(selectedPlayer), status);
-            bulkBody.append(playerData);
+                LocalDateTime.parse("2024-01-15T21:00:00"), correctPlayer.equals(selectedPlayer), status, String.valueOf(matchId),
+                Map.of(correctPlayer, 150, selectedPlayer, 100));
+
+            // Create wrapper and serialize
+            PlayerOfTheMatchWrapper wrapper = PlayerOfTheMatchWrapper.of(playerGame);
+            String wrapperJson = objectMapper.writeValueAsString(wrapper);
+
+            bulkBody.append(String.format("{\"index\":{\"_index\":\"player_games\",\"_id\":\"%d\"}}\n", id));
+            bulkBody.append(wrapperJson).append("\n");
 
             if ((i + 1) % batchSize == 0 || i == count - 1) {
                 sendBulkRequest(bulkBody.toString());

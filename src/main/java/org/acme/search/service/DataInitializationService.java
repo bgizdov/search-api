@@ -88,8 +88,9 @@ public class DataInitializationService {
 
         switch (mode) {
             case BASIC -> {
-                LOG.info("Loading basic sample data...");
+                LOG.info("✓ Loading BASIC sample data (wrapper objects only)...");
                 createBasicSampleData();
+                LOG.info("✓ BASIC sample data loading completed");
             }
             case PERFORMANCE_SMALL -> {
                 LOG.info("Loading performance test data (small)...");
@@ -101,7 +102,7 @@ public class DataInitializationService {
                 createPerformanceData(250_000); // 1M total records (250k per type)
             }
             default -> {
-                LOG.warn("Unknown sample data mode: " + mode);
+                LOG.warn("Unknown sample data mode: " + mode + ", falling back to BASIC");
                 createBasicSampleData();
             }
         }
@@ -275,13 +276,17 @@ public class DataInitializationService {
             SimpleMatch.class);
 
         // Create wrapper objects and index them
+        LOG.info("Creating SimpleMatchWrapper objects...");
         SimpleMatchWrapper wrapper1 = SimpleMatchWrapper.of(match1);
         SimpleMatchWrapper wrapper2 = SimpleMatchWrapper.of(match2);
         SimpleMatchWrapper wrapper3 = SimpleMatchWrapper.of(match3);
+        LOG.info("✓ Created 3 SimpleMatchWrapper objects");
 
+        LOG.info("Indexing football matches as wrapper objects...");
         indexDocument("football_matches", match1Id, wrapper1);
         indexDocument("football_matches", match2Id, wrapper2);
         indexDocument("football_matches", match3Id, wrapper3);
+        LOG.info("✓ Indexed 3 football matches as wrapper objects");
     }
 
     private void createSamplePredictions() throws Exception {
@@ -393,23 +398,37 @@ public class DataInitializationService {
     private void cleanupIndices() {
         String[] indices = {"football_matches", "predictions", "quiz_games", "player_games"};
 
+        LOG.info("Starting index cleanup to ensure wrapper structure...");
+
         for (String index : indices) {
             try {
-                // Try to delete the index
+                // Try to delete the index completely
                 Request deleteRequest = new Request("DELETE", "/" + index);
                 restClient.performRequest(deleteRequest);
-                LOG.info("Deleted index: " + index);
+                LOG.info("✓ Deleted index: " + index);
             } catch (Exception e) {
                 // Index might not exist, which is fine
                 LOG.debug("Could not delete index " + index + ": " + e.getMessage());
             }
         }
 
-        // Wait a bit for deletions to complete
+        // Wait longer for deletions to complete and cluster to stabilize
         try {
-            Thread.sleep(1000);
+            LOG.info("Waiting for index deletions to complete...");
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+
+        // Also try to clear any cached data
+        try {
+            Request clearCacheRequest = new Request("POST", "/_cache/clear");
+            restClient.performRequest(clearCacheRequest);
+            LOG.info("✓ Cleared Elasticsearch cache");
+        } catch (Exception e) {
+            LOG.debug("Could not clear cache: " + e.getMessage());
+        }
+
+        LOG.info("Index cleanup completed");
     }
 }
