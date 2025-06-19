@@ -5,9 +5,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.acme.search.dto.football.SimpleMatch;
+import org.acme.search.dto.football.SimpleMatchWrapper;
 import org.acme.search.dto.potm.PlayerOfTheMatch;
+import org.acme.search.dto.potm.PlayerOfTheMatchWrapper;
 import org.acme.search.dto.predictor.GameInstance;
+import org.acme.search.dto.predictor.GameInstanceWrapper;
 import org.acme.search.dto.classicquiz.ClassicQuizPublicDto;
+import org.acme.search.dto.classicquiz.ClassicQuizWrapper;
 import org.acme.search.enums.SearchMode;
 import org.acme.search.dto.UnifiedSearchResponse;
 import org.elasticsearch.client.Request;
@@ -224,6 +228,72 @@ public class SearchService {
         return findPlayerOfTheMatchGameById(id);
     }
 
+    // Wrapper methods that return wrapped DTOs
+
+    /**
+     * Search for football matches and return wrapped results
+     */
+    public List<SimpleMatchWrapper> searchFootballMatchesWrapped(String query, int size, SearchMode mode) throws IOException {
+        List<SimpleMatch> matches = searchFootballMatches(query, size, mode);
+        return matches.stream().map(SimpleMatchWrapper::of).toList();
+    }
+
+    /**
+     * Search for game instances and return wrapped results
+     */
+    public List<GameInstanceWrapper> searchGameInstancesWrapped(String query, int size, SearchMode mode) throws IOException {
+        List<GameInstance> gameInstances = searchGameInstances(query, size, mode);
+        return gameInstances.stream().map(GameInstanceWrapper::of).toList();
+    }
+
+    /**
+     * Search for classic quizzes and return wrapped results
+     */
+    public List<ClassicQuizWrapper> searchClassicQuizzesWrapped(String query, int size, SearchMode mode) throws IOException {
+        List<ClassicQuizPublicDto> quizzes = searchClassicQuizzes(query, size, mode);
+        return quizzes.stream().map(ClassicQuizWrapper::of).toList();
+    }
+
+    /**
+     * Search for player of the match games and return wrapped results
+     */
+    public List<PlayerOfTheMatchWrapper> searchPlayerOfTheMatchGamesWrapped(String query, int size, SearchMode mode) throws IOException {
+        List<PlayerOfTheMatch> playerGames = searchPlayerOfTheMatchGames(query, size, mode);
+        return playerGames.stream().map(PlayerOfTheMatchWrapper::of).toList();
+    }
+
+    /**
+     * Find a football match by ID and return wrapped result
+     */
+    public Optional<SimpleMatchWrapper> findFootballMatchByIdWrapped(Long id) throws IOException {
+        Optional<SimpleMatch> match = findFootballMatchById(id);
+        return match.map(SimpleMatchWrapper::of);
+    }
+
+    /**
+     * Find a game instance by ID and return wrapped result
+     */
+    public Optional<GameInstanceWrapper> findGameInstanceByIdWrapped(Long id) throws IOException {
+        Optional<GameInstance> gameInstance = findGameInstanceById(id);
+        return gameInstance.map(GameInstanceWrapper::of);
+    }
+
+    /**
+     * Find a classic quiz by ID and return wrapped result
+     */
+    public Optional<ClassicQuizWrapper> findClassicQuizByIdWrapped(Long id) throws IOException {
+        Optional<ClassicQuizPublicDto> quiz = findClassicQuizById(id);
+        return quiz.map(ClassicQuizWrapper::of);
+    }
+
+    /**
+     * Find a player of the match game by ID and return wrapped result
+     */
+    public Optional<PlayerOfTheMatchWrapper> findPlayerOfTheMatchGameByIdWrapped(Long id) throws IOException {
+        Optional<PlayerOfTheMatch> playerGame = findPlayerOfTheMatchGameById(id);
+        return playerGame.map(PlayerOfTheMatchWrapper::of);
+    }
+
     /**
      * Search across all entity types when no type is specified
      */
@@ -243,7 +313,21 @@ public class SearchService {
         List<ClassicQuizPublicDto> classicQuizzes = searchClassicQuizzes(query, sizePerType, mode);
         List<PlayerOfTheMatch> playerOfTheMatchGames = searchPlayerOfTheMatchGames(query, sizePerType, mode);
 
-        return UnifiedSearchResponse.of(footballMatches, gameInstances, classicQuizzes, playerOfTheMatchGames);
+        // Convert to wrapper types
+        List<SimpleMatchWrapper> wrappedMatches = footballMatches.stream()
+            .map(SimpleMatchWrapper::of)
+            .toList();
+        List<GameInstanceWrapper> wrappedGameInstances = gameInstances.stream()
+            .map(GameInstanceWrapper::of)
+            .toList();
+        List<ClassicQuizWrapper> wrappedQuizzes = classicQuizzes.stream()
+            .map(ClassicQuizWrapper::of)
+            .toList();
+        List<PlayerOfTheMatchWrapper> wrappedPlayerGames = playerOfTheMatchGames.stream()
+            .map(PlayerOfTheMatchWrapper::of)
+            .toList();
+
+        return UnifiedSearchResponse.of(wrappedMatches, wrappedGameInstances, wrappedQuizzes, wrappedPlayerGames);
     }
 
     /**
@@ -260,30 +344,30 @@ public class SearchService {
         return switch (type.toLowerCase()) {
             case "matches", "football-matches" -> {
                 if (id != null) {
-                    yield findFootballMatchById(id);
+                    yield findFootballMatchByIdWrapped(id);
                 } else {
-                    yield searchFootballMatches(query, size, mode);
+                    yield searchFootballMatchesWrapped(query, size, mode);
                 }
             }
             case "predictions", "game-instances" -> {
                 if (id != null) {
-                    yield findGameInstanceById(id);
+                    yield findGameInstanceByIdWrapped(id);
                 } else {
-                    yield searchGameInstances(query, size, mode);
+                    yield searchGameInstancesWrapped(query, size, mode);
                 }
             }
             case "quiz-games", "classic-quizzes" -> {
                 if (id != null) {
-                    yield findClassicQuizById(id);
+                    yield findClassicQuizByIdWrapped(id);
                 } else {
-                    yield searchClassicQuizzes(query, size, mode);
+                    yield searchClassicQuizzesWrapped(query, size, mode);
                 }
             }
             case "player-games", "player-of-the-match-games" -> {
                 if (id != null) {
-                    yield findPlayerOfTheMatchGameById(id);
+                    yield findPlayerOfTheMatchGameByIdWrapped(id);
                 } else {
-                    yield searchPlayerOfTheMatchGames(query, size, mode);
+                    yield searchPlayerOfTheMatchGamesWrapped(query, size, mode);
                 }
             }
             default -> throw new IllegalArgumentException("Unsupported type: " + type + ". Supported types: matches, predictions, quiz-games, player-games");

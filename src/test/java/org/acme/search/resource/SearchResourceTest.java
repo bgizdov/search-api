@@ -23,7 +23,7 @@ class SearchResourceTest {
 
     @BeforeAll
     void setupTestData() {
-        // Create sample football match (matching SimpleMatch DTO)
+        // Create sample football match (matching Match DTO)
         String matchData = """
             {
                 "id": "1",
