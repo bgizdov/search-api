@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Service to initialize sample data in Elasticsearch on startup
@@ -36,6 +38,15 @@ public class DataInitializationService {
     SampleDataConfig sampleDataConfig;
 
     private final ObjectMapper objectMapper;
+    private final Random random = new Random();
+
+    // ID generators for different entity types
+    private final AtomicLong matchIdGenerator = new AtomicLong(1000);
+    private final AtomicLong teamIdGenerator = new AtomicLong(2000);
+    private final AtomicLong competitionIdGenerator = new AtomicLong(3000);
+    private final AtomicLong gameInstanceIdGenerator = new AtomicLong(4000);
+    private final AtomicLong quizIdGenerator = new AtomicLong(5000);
+    private final AtomicLong playerGameIdGenerator = new AtomicLong(6000);
 
     public DataInitializationService() {
         this.objectMapper = new ObjectMapper();
@@ -109,10 +120,27 @@ public class DataInitializationService {
     }
 
     private void createSampleMatches() throws Exception {
+        // Generate IDs for teams and competitions
+        String barcelonaId = generateTeamId();
+        String realMadridId = generateTeamId();
+        String manUtdId = generateTeamId();
+        String liverpoolId = generateTeamId();
+        String bayernId = generateTeamId();
+        String dortmundId = generateTeamId();
+
+        String laLigaId = generateCompetitionId();
+        String premierLeagueId = generateCompetitionId();
+        String bundesligaId = generateCompetitionId();
+
+        // Generate match IDs
+        String match1Id = generateMatchId();
+        String match2Id = generateMatchId();
+        String match3Id = generateMatchId();
+
         // Create simplified match data that works well with Elasticsearch
         String matchData1 = """
             {
-                "id": "fb:m:123",
+                "id": "%s",
                 "kickoffAt": %d,
                 "finishedAt": %d,
                 "updatedAt": %d,
@@ -123,17 +151,17 @@ public class DataInitializationService {
                     "code": "FT"
                 },
                 "homeTeam": {
-                    "id": "fb:t:456",
+                    "id": "%s",
                     "name": "Barcelona",
                     "shortName": "Barca"
                 },
                 "awayTeam": {
-                    "id": "fb:t:789",
+                    "id": "%s",
                     "name": "Real Madrid",
                     "shortName": "Real"
                 },
                 "competition": {
-                    "id": "fb:c:101",
+                    "id": "%s",
                     "name": "La Liga"
                 },
                 "goalsFullTimeHome": 2,
@@ -152,7 +180,7 @@ public class DataInitializationService {
 
         String matchData2 = """
             {
-                "id": "fb:m:124",
+                "id": "%s",
                 "kickoffAt": %d,
                 "finishedAt": %d,
                 "updatedAt": %d,
@@ -163,17 +191,17 @@ public class DataInitializationService {
                     "code": "FT"
                 },
                 "homeTeam": {
-                    "id": "fb:t:111",
+                    "id": "%s",
                     "name": "Manchester United",
                     "shortName": "Man Utd"
                 },
                 "awayTeam": {
-                    "id": "fb:t:222",
+                    "id": "%s",
                     "name": "Liverpool",
                     "shortName": "Liverpool"
                 },
                 "competition": {
-                    "id": "fb:c:102",
+                    "id": "%s",
                     "name": "Premier League"
                 },
                 "goalsFullTimeHome": 1,
@@ -192,7 +220,7 @@ public class DataInitializationService {
 
         String matchData3 = """
             {
-                "id": "fb:m:125",
+                "id": "%s",
                 "kickoffAt": %d,
                 "updatedAt": %d,
                 "status": {
@@ -202,17 +230,17 @@ public class DataInitializationService {
                     "code": "NS"
                 },
                 "homeTeam": {
-                    "id": "fb:t:333",
+                    "id": "%s",
                     "name": "Bayern Munich",
                     "shortName": "Bayern"
                 },
                 "awayTeam": {
-                    "id": "fb:t:444",
+                    "id": "%s",
                     "name": "Borussia Dortmund",
                     "shortName": "BVB"
                 },
                 "competition": {
-                    "id": "fb:c:103",
+                    "id": "%s",
                     "name": "Bundesliga"
                 },
                 "venue": "Allianz Arena",
@@ -229,18 +257,26 @@ public class DataInitializationService {
         long tomorrow = now + 24 * 60 * 60 * 1000;
 
         // Index the matches as raw JSON
-        indexRawDocument("football_matches", "fb:m:123", String.format(matchData1, yesterday, yesterday, now, yesterday));
-        indexRawDocument("football_matches", "fb:m:124", String.format(matchData2, twoDaysAgo, twoDaysAgo, now, twoDaysAgo));
-        indexRawDocument("football_matches", "fb:m:125", String.format(matchData3, tomorrow, now));
+        indexRawDocument("football_matches", match1Id,
+            String.format(matchData1, match1Id, barcelonaId, realMadridId, laLigaId, yesterday, yesterday, now, yesterday));
+        indexRawDocument("football_matches", match2Id,
+            String.format(matchData2, match2Id, manUtdId, liverpoolId, premierLeagueId, twoDaysAgo, twoDaysAgo, now, twoDaysAgo));
+        indexRawDocument("football_matches", match3Id,
+            String.format(matchData3, match3Id, bayernId, dortmundId, bundesligaId, tomorrow, now));
     }
 
     private void createSamplePredictions() throws Exception {
+        // Generate random match IDs (assuming they exist from previous matches)
+        Long matchId1 = 1000L + random.nextInt(100);
+        Long matchId2 = 1000L + random.nextInt(100);
+        Long matchId3 = 1000L + random.nextInt(100);
+
         List<GameInstance> predictions = List.of(
-            new GameInstance(1L, 1L, "user1", 2, 1, "HOME_WIN",
+            new GameInstance(generateGameInstanceId(), matchId1, "user1", 2, 1, "HOME_WIN",
                 LocalDateTime.now().minusHours(2), 85, true, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
-            new GameInstance(2L, 2L, "user2", 0, 2, "AWAY_WIN",
+            new GameInstance(generateGameInstanceId(), matchId2, "user2", 0, 2, "AWAY_WIN",
                 LocalDateTime.now().minusHours(3), 70, false, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
-            new GameInstance(3L, 3L, "user1", 3, 1, "HOME_WIN",
+            new GameInstance(generateGameInstanceId(), matchId3, "user1", 3, 1, "HOME_WIN",
                 LocalDateTime.now().minusMinutes(30), 90, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)
         );
 
@@ -251,11 +287,11 @@ public class DataInitializationService {
 
     private void createSampleQuizGames() throws Exception {
         List<ClassicQuizPublicDto> quizGames = List.of(
-            new ClassicQuizPublicDto(1L, "Football Trivia", "Test your football knowledge",
+            new ClassicQuizPublicDto(generateQuizId(), "Football Trivia", "Test your football knowledge",
                 List.of("Who won the 2022 World Cup?", "Which team has won the most Champions League titles?"),
                 List.of("Argentina", "Real Madrid"),
                 "Sports", 3, 300, LocalDateTime.now().minusDays(1), "admin", true, null, null, 0, 0, null, null, null, 0, null, null, 0.0f, 0, null, null, false, null, null, 0, 0, null),
-            new ClassicQuizPublicDto(2L, "Premier League Quiz", "All about English football",
+            new ClassicQuizPublicDto(generateQuizId(), "Premier League Quiz", "All about English football",
                 List.of("Which team won the first Premier League title?", "Who is the top scorer in Premier League history?"),
                 List.of("Manchester United", "Alan Shearer"),
                 "Sports", 4, 600, LocalDateTime.now().minusDays(2), "admin", true, null, null, 0, 0, null, null, null, 0, null, null, 0.0f, 0, null, null, false, null, null, 0, 0, null)
@@ -267,16 +303,20 @@ public class DataInitializationService {
     }
 
     private void createSamplePlayerGames() throws Exception {
+        // Generate random match IDs (assuming they exist from previous matches)
+        Long matchId1 = 1000L + random.nextInt(100);
+        Long matchId2 = 1000L + random.nextInt(100);
+
         List<PlayerOfTheMatch> playerGames = List.of(
-            new PlayerOfTheMatch(1L, 1L, "El Clasico Player of the Match",
+            new PlayerOfTheMatch(generatePlayerGameId(), matchId1, "El Clasico Player of the Match",
                 List.of("Lionel Messi", "Karim Benzema", "Pedri", "Vinicius Jr."),
                 "Lionel Messi", "user1", "Lionel Messi", 10,
-                LocalDateTime.now().minusHours(1), true, "COMPLETED", "1",
+                LocalDateTime.now().minusHours(1), true, "COMPLETED", matchId1.toString(),
                 Map.of("Lionel Messi", 150, "Karim Benzema", 75, "Pedri", 45, "Vinicius Jr.", 30)),
-            new PlayerOfTheMatch(2L, 2L, "Premier League POTM",
+            new PlayerOfTheMatch(generatePlayerGameId(), matchId2, "Premier League POTM",
                 List.of("Mohamed Salah", "Bruno Fernandes", "Virgil van Dijk", "Marcus Rashford"),
                 "Mohamed Salah", "user2", "Bruno Fernandes", 0,
-                LocalDateTime.now().minusHours(2), false, "COMPLETED", "2",
+                LocalDateTime.now().minusHours(2), false, "COMPLETED", matchId2.toString(),
                 Map.of("Mohamed Salah", 200, "Bruno Fernandes", 120, "Virgil van Dijk", 80, "Marcus Rashford", 60))
         );
 
@@ -298,5 +338,30 @@ public class DataInitializationService {
         request.setJsonEntity(jsonDocument);
         restClient.performRequest(request);
         LOG.debug("Indexed raw document in " + index + " with id: " + id);
+    }
+
+    // Helper methods to generate IDs
+    private String generateMatchId() {
+        return "fb:m:" + matchIdGenerator.getAndIncrement();
+    }
+
+    private String generateTeamId() {
+        return "fb:t:" + teamIdGenerator.getAndIncrement();
+    }
+
+    private String generateCompetitionId() {
+        return "fb:c:" + competitionIdGenerator.getAndIncrement();
+    }
+
+    private Long generateGameInstanceId() {
+        return gameInstanceIdGenerator.getAndIncrement();
+    }
+
+    private Long generateQuizId() {
+        return quizIdGenerator.getAndIncrement();
+    }
+
+    private Long generatePlayerGameId() {
+        return playerGameIdGenerator.getAndIncrement();
     }
 }
