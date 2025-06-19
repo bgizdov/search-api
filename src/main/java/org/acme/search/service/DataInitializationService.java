@@ -112,7 +112,7 @@ public class DataInitializationService {
         // Create simplified match data that works well with Elasticsearch
         String matchData1 = """
             {
-                "id": "1",
+                "id": "fb:m:123",
                 "kickoffAt": %d,
                 "finishedAt": %d,
                 "updatedAt": %d,
@@ -123,17 +123,17 @@ public class DataInitializationService {
                     "code": "FT"
                 },
                 "homeTeam": {
-                    "id": "barcelona",
+                    "id": "fb:t:456",
                     "name": "Barcelona",
                     "shortName": "Barca"
                 },
                 "awayTeam": {
-                    "id": "real-madrid",
+                    "id": "fb:t:789",
                     "name": "Real Madrid",
                     "shortName": "Real"
                 },
                 "competition": {
-                    "id": "la-liga",
+                    "id": "fb:c:101",
                     "name": "La Liga"
                 },
                 "goalsFullTimeHome": 2,
@@ -152,7 +152,7 @@ public class DataInitializationService {
 
         String matchData2 = """
             {
-                "id": "2",
+                "id": "fb:m:124",
                 "kickoffAt": %d,
                 "finishedAt": %d,
                 "updatedAt": %d,
@@ -163,17 +163,17 @@ public class DataInitializationService {
                     "code": "FT"
                 },
                 "homeTeam": {
-                    "id": "man-utd",
+                    "id": "fb:t:111",
                     "name": "Manchester United",
                     "shortName": "Man Utd"
                 },
                 "awayTeam": {
-                    "id": "liverpool",
+                    "id": "fb:t:222",
                     "name": "Liverpool",
                     "shortName": "Liverpool"
                 },
                 "competition": {
-                    "id": "premier-league",
+                    "id": "fb:c:102",
                     "name": "Premier League"
                 },
                 "goalsFullTimeHome": 1,
@@ -192,7 +192,7 @@ public class DataInitializationService {
 
         String matchData3 = """
             {
-                "id": "3",
+                "id": "fb:m:125",
                 "kickoffAt": %d,
                 "updatedAt": %d,
                 "status": {
@@ -202,17 +202,17 @@ public class DataInitializationService {
                     "code": "NS"
                 },
                 "homeTeam": {
-                    "id": "bayern",
+                    "id": "fb:t:333",
                     "name": "Bayern Munich",
                     "shortName": "Bayern"
                 },
                 "awayTeam": {
-                    "id": "dortmund",
+                    "id": "fb:t:444",
                     "name": "Borussia Dortmund",
                     "shortName": "BVB"
                 },
                 "competition": {
-                    "id": "bundesliga",
+                    "id": "fb:c:103",
                     "name": "Bundesliga"
                 },
                 "venue": "Allianz Arena",
@@ -229,9 +229,9 @@ public class DataInitializationService {
         long tomorrow = now + 24 * 60 * 60 * 1000;
 
         // Index the matches as raw JSON
-        indexRawDocument("football_matches", "1", String.format(matchData1, yesterday, yesterday, now, yesterday));
-        indexRawDocument("football_matches", "2", String.format(matchData2, twoDaysAgo, twoDaysAgo, now, twoDaysAgo));
-        indexRawDocument("football_matches", "3", String.format(matchData3, tomorrow, now));
+        indexRawDocument("football_matches", "fb:m:123", String.format(matchData1, yesterday, yesterday, now, yesterday));
+        indexRawDocument("football_matches", "fb:m:124", String.format(matchData2, twoDaysAgo, twoDaysAgo, now, twoDaysAgo));
+        indexRawDocument("football_matches", "fb:m:125", String.format(matchData3, tomorrow, now));
     }
 
     private void createSamplePredictions() throws Exception {
